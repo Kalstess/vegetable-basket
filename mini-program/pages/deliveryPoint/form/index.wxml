@@ -1,0 +1,29 @@
+<view class="page-padding">
+  <view class="card">
+    <view class="form-label">网点名称 *</view>
+    <input class="form-input" bindinput="i" data-k="name" value="{{form.name}}" placeholder="请输入网点名称" />
+    
+    <view class="form-label">网点类型 *</view>
+    <picker range="{{types}}" value="{{typeIndex}}" bindchange="pickType">
+      <view class="form-input">{{form.pointType || '请选择类型'}}</view>
+    </picker>
+    
+    <view class="form-label">地址</view>
+    <input class="form-input" bindinput="i" data-k="address" value="{{form.address}}" placeholder="请输入地址" />
+    
+    <view class="form-label">关联车辆（可选）</view>
+    <picker range="{{vehicles}}" range-key="plateNumber" value="{{vehicleIndex}}" bindchange="selectVehicle">
+      <view class="form-input">{{form.vehiclePlateNumber || '不关联车辆'}}</view>
+    </picker>
+    
+    <view class="form-label">联系人</view>
+    <input class="form-input" bindinput="i" data-k="contactPerson" value="{{form.contactPerson}}" placeholder="请输入联系人" />
+    
+    <view class="form-label">联系电话</view>
+    <input class="form-input" type="number" bindinput="i" data-k="contactPhone" value="{{form.contactPhone}}" placeholder="请输入联系电话" />
+    
+    <view style="height: 24rpx;"></view>
+    <view class="btn" bindtap="submit">提交</view>
+  </view>
+</view>
+

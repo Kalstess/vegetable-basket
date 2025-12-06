@@ -1,0 +1,54 @@
+<view class="page-padding">
+	<!-- 用户信息栏 -->
+	<view class="card" style="margin-bottom:20rpx;">
+		<view style="display:flex;justify-content:space-between;align-items:center;">
+			<view>
+				<text style="font-size:28rpx;color:#666;">欢迎，{{nickname}}</text>
+				<text style="font-size:24rpx;color:#999;margin-left:20rpx;">{{role === 'ADMIN' ? '管理员' : role === 'COMPANY' ? '企业用户' : role === 'DRIVER' ? '司机用户' : '用户'}}</text>
+			</view>
+			<view style="display:flex;gap:20rpx;">
+				<view class="btn-small" bindtap="goProfile">个人中心</view>
+				<view class="btn-small" bindtap="onLogout">退出</view>
+			</view>
+		</view>
+	</view>
+	
+	<!-- 统计概览（仅管理员显示） -->
+	<view class="card" wx:if="{{role === 'ADMIN'}}">
+		<view style="font-size:32rpx;font-weight:600;margin-bottom:12rpx;">统计概览</view>
+		<view style="display:flex;justify-content:space-between;">
+			<view>企业：{{stats.companyCount||0}}</view>
+			<view>车辆：{{stats.vehicleCount||0}}</view>
+			<view>运输：{{stats.transportCount||0}}</view>
+			<view>反馈：{{stats.feedbackCount||0}}</view>
+		</view>
+	</view>
+	
+	<!-- 填报入口 -->
+	<view class="card">
+		<view style="font-size:32rpx;font-weight:600;margin-bottom:12rpx;">功能菜单</view>
+		<view style="display:flex;flex-wrap:wrap;gap:16rpx;">
+			<!-- 企业管理：管理员和企业用户可见 -->
+			<view class="btn" style="width:46%;" wx:if="{{role === 'ADMIN' || role === 'COMPANY'}}" bindtap="goCompany">企业管理</view>
+			<!-- 车辆管理：所有用户可见 -->
+			<view class="btn" style="width:46%;" bindtap="goVehicleList">车辆管理</view>
+			<!-- 车辆统计：仅管理员可见 -->
+			<view class="btn" style="width:46%;" wx:if="{{role === 'ADMIN'}}" bindtap="goVehicleStatistics">车辆统计</view>
+			<!-- 运输统计：所有用户可见 -->
+			<view class="btn" style="width:46%;" bindtap="goTransport">运输统计</view>
+			<!-- 配送网点：所有用户可见 -->
+			<view class="btn" style="width:46%;" bindtap="goDeliveryPoint">配送网点</view>
+			<!-- 路线填报：所有用户可见 -->
+			<view class="btn" style="width:46%;" bindtap="goRoute">路线填报</view>
+			<!-- 维护保养：所有用户可见 -->
+			<view class="btn" style="width:46%;" bindtap="goMaintenance">维护保养</view>
+			<!-- 合规运营：所有用户可见 -->
+			<view class="btn" style="width:46%;" bindtap="goCompliance">合规运营</view>
+			<!-- 需求反馈：所有用户可见 -->
+			<view class="btn" style="width:46%;" bindtap="goFeedback">需求反馈</view>
+			<!-- 用户管理：仅管理员可见 -->
+			<view class="btn" style="width:46%;" wx:if="{{role === 'ADMIN'}}" bindtap="goUsers">用户管理</view>
+		</view>
+	</view>
+</view>
+

@@ -1,0 +1,38 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="section-title">基本信息</view>
+		<view class="form-label">用户名</view>
+		<view class="form-input" style="color:#999;">{{formData.username}}</view>
+		
+		<view class="form-label">角色</view>
+		<view class="form-input" style="color:#999;">{{formData.role === 'ADMIN' ? '管理员' : formData.role === 'COMPANY' ? '企业用户' : formData.role === 'DRIVER' ? '司机用户' : formData.role}}</view>
+		
+		<view class="form-label">昵称</view>
+		<input class="form-input" value="{{formData.nickname}}" placeholder="请输入昵称" bindinput="onNicknameChange" />
+		
+		<view class="form-label">邮箱</view>
+		<input class="form-input" type="text" value="{{formData.email}}" placeholder="请输入邮箱" bindinput="onEmailChange" />
+		
+		<view class="form-label">电话</view>
+		<input class="form-input" type="text" value="{{formData.phone}}" placeholder="请输入电话" bindinput="onPhoneChange" />
+		
+		<view class="form-label" wx:if="{{formData.company}}">关联企业</view>
+		<view class="form-input" wx:if="{{formData.company}}" style="color:#999;">{{formData.company.name}}</view>
+		
+		<view class="form-label" wx:if="{{formData.vehicle}}">关联车辆</view>
+		<view class="form-input" wx:if="{{formData.vehicle}}" style="color:#999;">{{formData.vehicle.plateNumber}}</view>
+	</view>
+	
+	<view class="card">
+		<view class="section-title">修改密码</view>
+		<view class="form-label">新密码</view>
+		<input class="form-input" type="password" value="{{formData.password}}" placeholder="留空则不修改密码" bindinput="onPasswordChange" />
+		<view style="font-size:24rpx;color:#999;margin-top:8rpx;">密码长度至少6位</view>
+	</view>
+	
+	<view style="display:flex;gap:20rpx;margin-top:40rpx;">
+		<view class="btn" style="flex:1;" bindtap="handleSubmit" loading="{{submitting}}">保存</view>
+		<view class="btn-secondary btn" style="flex:1;" bindtap="handleReset">重置</view>
+	</view>
+</view>
+

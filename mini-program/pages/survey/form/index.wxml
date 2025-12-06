@@ -1,0 +1,180 @@
+<view class="page-padding">
+	<view class="card">
+		<!-- 步骤指示器 -->
+		<view class="steps">
+			<view class="step-item {{currentStep >= 0 ? 'active' : ''}}">1</view>
+			<view class="step-line"></view>
+			<view class="step-item {{currentStep >= 1 ? 'active' : ''}}">2</view>
+			<view class="step-line"></view>
+			<view class="step-item {{currentStep >= 2 ? 'active' : ''}}">3</view>
+			<view class="step-line"></view>
+			<view class="step-item {{currentStep >= 3 ? 'active' : ''}}">4</view>
+			<view class="step-line"></view>
+			<view class="step-item {{currentStep >= 4 ? 'active' : ''}}">5</view>
+			<view class="step-line"></view>
+			<view class="step-item {{currentStep >= 5 ? 'active' : ''}}">6</view>
+		</view>
+
+		<!-- 第一步：基本信息 -->
+		<view wx:if="{{currentStep === 0}}">
+			<view class="form-label">企业</view>
+			<picker mode="selector" range="{{companyDisplayNames}}" value="{{companyIndex}}" bindchange="onCompanyChange">
+				<view class="form-input">{{companyName || '请选择企业'}}</view>
+			</picker>
+			<view class="form-label">调查年份</view>
+			<input class="form-input" type="number" bindinput="i" data-k="surveyYear" value="{{form.surveyYear}}" placeholder="如 2025" />
+			<view class="form-label">主要配送客户类型（最多3项）</view>
+			<checkbox-group bindchange="onCustomerTypesChange">
+				<label wx:for="{{deliveryCustomerTypes}}" wx:key="*this" style="display:flex;align-items:center;margin:8rpx 0;">
+					<checkbox value="{{item}}" checked="{{checkedCustomerTypes[item]}}" />{{item}}
+				</label>
+			</checkbox-group>
+		</view>
+
+		<!-- 第二步：运输量及车辆 -->
+		<view wx:if="{{currentStep === 1}}">
+			<view class="form-label">2022年运输量(吨)</view>
+			<input class="form-input" type="digit" bindinput="i" data-k="annualTransport2022" value="{{form.annualTransport2022}}" />
+			<view class="form-label">2023年运输量(吨)</view>
+			<input class="form-input" type="digit" bindinput="i" data-k="annualTransport2023" value="{{form.annualTransport2023}}" />
+			<view class="form-label">2024年运输量(吨)</view>
+			<input class="form-input" type="digit" bindinput="i" data-k="annualTransport2024" value="{{form.annualTransport2024}}" />
+			<view class="form-label">2025年运输量(吨)</view>
+			<input class="form-input" type="digit" bindinput="i" data-k="annualTransport2025" value="{{form.annualTransport2025}}" />
+			<view class="form-label">未来三年自有货运车辆预计</view>
+			<radio-group bindchange="i" data-k="futureVehiclePlan">
+				<label><radio value="增加" checked="{{form.futureVehiclePlan === '增加'}}" />增加</label>
+				<label><radio value="减少" checked="{{form.futureVehiclePlan === '减少'}}" />减少</label>
+				<label><radio value="不变" checked="{{form.futureVehiclePlan === '不变'}}" />不变</label>
+			</radio-group>
+			<view class="form-label">2025年营业收入(万元)</view>
+			<input class="form-input" type="digit" bindinput="i" data-k="revenue2025" value="{{form.revenue2025}}" />
+			<view class="form-label">2025年普通菜篮子工程车(辆)</view>
+			<input class="form-input" type="number" bindinput="i" data-k="regularBasketVehicles2025" value="{{form.regularBasketVehicles2025}}" />
+			<view class="form-label">2025年冷藏菜篮子工程车(辆)</view>
+			<input class="form-input" type="number" bindinput="i" data-k="coldBasketVehicles2025" value="{{form.coldBasketVehicles2025}}" />
+			<view class="form-label">2025年普通其他货运车(辆)</view>
+			<input class="form-input" type="number" bindinput="i" data-k="regularOtherVehicles2025" value="{{form.regularOtherVehicles2025}}" />
+			<view class="form-label">2025年冷藏其他货运车(辆)</view>
+			<input class="form-input" type="number" bindinput="i" data-k="coldOtherVehicles2025" value="{{form.coldOtherVehicles2025}}" />
+			<view class="form-label">菜篮子车平均每月出车次数相比其他货运车</view>
+			<radio-group bindchange="i" data-k="basketTripComparison">
+				<label><radio value="非常低" checked="{{form.basketTripComparison === '非常低'}}" />非常低</label>
+				<label><radio value="低" checked="{{form.basketTripComparison === '低'}}" />低</label>
+				<label><radio value="差不多" checked="{{form.basketTripComparison === '差不多'}}" />差不多</label>
+				<label><radio value="高" checked="{{form.basketTripComparison === '高'}}" />高</label>
+				<label><radio value="非常高" checked="{{form.basketTripComparison === '非常高'}}" />非常高</label>
+			</radio-group>
+		</view>
+
+		<!-- 第三步：产品类型 -->
+		<view wx:if="{{currentStep === 2}}">
+			<view class="form-label">最主要产品种类</view>
+			<radio-group bindchange="i" data-k="mainProductType">
+				<label><radio value="A生鲜蔬菜类" checked="{{form.mainProductType === 'A生鲜蔬菜类'}}" />A.生鲜蔬菜类</label>
+				<label><radio value="B肉类及其制品" checked="{{form.mainProductType === 'B肉类及其制品'}}" />B.肉类及其制品</label>
+				<label><radio value="C水产品类" checked="{{form.mainProductType === 'C水产品类'}}" />C.水产品类</label>
+				<label><radio value="D豆制品类" checked="{{form.mainProductType === 'D豆制品类'}}" />D.豆制品类</label>
+				<label><radio value="E蛋奶及其制品" checked="{{form.mainProductType === 'E蛋奶及其制品'}}" />E.蛋奶及其制品</label>
+				<label><radio value="F水果类" checked="{{form.mainProductType === 'F水果类'}}" />F.水果类</label>
+				<label><radio value="G粮食及其制品" checked="{{form.mainProductType === 'G粮食及其制品'}}" />G.粮食及其制品</label>
+				<label><radio value="H综合配送类" checked="{{form.mainProductType === 'H综合配送类'}}" />H.综合配送类</label>
+			</radio-group>
+			<view class="form-label">次要产品种类</view>
+			<radio-group bindchange="i" data-k="secondaryProductType">
+				<label><radio value="A生鲜蔬菜类" checked="{{form.secondaryProductType === 'A生鲜蔬菜类'}}" />A.生鲜蔬菜类</label>
+				<label><radio value="B肉类及其制品" checked="{{form.secondaryProductType === 'B肉类及其制品'}}" />B.肉类及其制品</label>
+				<label><radio value="C水产品类" checked="{{form.secondaryProductType === 'C水产品类'}}" />C.水产品类</label>
+				<label><radio value="D豆制品类" checked="{{form.secondaryProductType === 'D豆制品类'}}" />D.豆制品类</label>
+				<label><radio value="E蛋奶及其制品" checked="{{form.secondaryProductType === 'E蛋奶及其制品'}}" />E.蛋奶及其制品</label>
+				<label><radio value="F水果类" checked="{{form.secondaryProductType === 'F水果类'}}" />F.水果类</label>
+				<label><radio value="G粮食及其制品" checked="{{form.secondaryProductType === 'G粮食及其制品'}}" />G.粮食及其制品</label>
+				<label><radio value="H综合配送类" checked="{{form.secondaryProductType === 'H综合配送类'}}" />H.综合配送类</label>
+			</radio-group>
+		</view>
+
+		<!-- 第四步：载具及定位 -->
+		<view wx:if="{{currentStep === 3}}">
+			<view class="form-label">标准化载具</view>
+			<checkbox-group bindchange="onEquipmentTypesChange">
+				<label wx:for="{{standardEquipmentTypes}}" wx:key="*this" style="display:flex;align-items:center;margin:8rpx 0;">
+					<checkbox value="{{item}}" checked="{{checkedEquipmentTypes[item]}}" />{{item}}
+				</label>
+			</checkbox-group>
+			<view class="form-label">卫星定位系统类型</view>
+			<radio-group bindchange="i" data-k="gpsSystemType">
+				<label><radio value="GPS单模" checked="{{form.gpsSystemType === 'GPS单模'}}" />GPS单模</label>
+				<label><radio value="北斗单模" checked="{{form.gpsSystemType === '北斗单模'}}" />北斗单模</label>
+				<label><radio value="北斗GPS双模" checked="{{form.gpsSystemType === '北斗GPS双模'}}" />北斗+GPS双模</label>
+				<label><radio value="北斗GPSGLONASSGalileo多星融合" checked="{{form.gpsSystemType === '北斗GPSGLONASSGalileo多星融合'}}" />北斗+GPS+GLONASS/Galileo多星融合</label>
+				<label><radio value="暂未安装任何卫星定位系统" checked="{{form.gpsSystemType === '暂未安装任何卫星定位系统'}}" />暂未安装任何卫星定位系统</label>
+			</radio-group>
+			<view class="form-label">已安装卫星定位系统的菜篮子工程车接入的平台</view>
+			<checkbox-group bindchange="onGpsPlatformTypesChange">
+				<label wx:for="{{gpsPlatformTypes}}" wx:key="*this" style="display:flex;align-items:center;margin:8rpx 0;">
+					<checkbox value="{{item}}" checked="{{checkedGpsPlatformTypes[item]}}" />{{item}}
+				</label>
+			</checkbox-group>
+		</view>
+
+		<!-- 第五步：冷藏车信息 -->
+		<view wx:if="{{currentStep === 4}}">
+			<view class="form-label">是否有冷藏菜篮子工程车</view>
+			<switch checked="{{form.hasColdBasketVehicle}}" bindchange="onSwitchChange" data-k="hasColdBasketVehicle" />
+			<view wx:if="{{form.hasColdBasketVehicle}}">
+				<view class="form-label">是否有多温区/分舱/分栏设计</view>
+				<radio-group bindchange="i" data-k="coldVehicleMultiTemp">
+					<label><radio value="{{true}}" checked="{{form.coldVehicleMultiTemp === true}}" />有</label>
+					<label><radio value="{{false}}" checked="{{form.coldVehicleMultiTemp === false}}" />没有</label>
+				</radio-group>
+				<view class="form-label">温度记录设备</view>
+				<radio-group bindchange="i" data-k="tempRecordingDevice">
+					<label><radio value="只有驾驶区有温度显示无记录" checked="{{form.tempRecordingDevice === '只有驾驶区有温度显示无记录'}}" />只有驾驶区有温度显示(无记录)</label>
+					<label><radio value="车载温度记录仪单机无网络型" checked="{{form.tempRecordingDevice === '车载温度记录仪单机无网络型'}}" />车载温度记录仪(单机无网络型)</label>
+					<label><radio value="车载温度记录仪无线网络传输型" checked="{{form.tempRecordingDevice === '车载温度记录仪无线网络传输型'}}" />车载温度记录仪(无线网络传输型)</label>
+					<label><radio value="实时云端监控异常报警平台" checked="{{form.tempRecordingDevice === '实时云端监控异常报警平台'}}" />实时云端监控+异常报警平台</label>
+					<label><radio value="无温控记录设备" checked="{{form.tempRecordingDevice === '无温控记录设备'}}" />无温控记录设备</label>
+					<label><radio value="其他" checked="{{form.tempRecordingDevice === '其他'}}" />其他</label>
+				</radio-group>
+			</view>
+		</view>
+
+		<!-- 第六步：其他信息 -->
+		<view wx:if="{{currentStep === 5}}">
+			<view class="form-label">平均装载率</view>
+			<radio-group bindchange="i" data-k="avgLoadingRate">
+				<label><radio value="小于等于50" checked="{{form.avgLoadingRate === '小于等于50'}}" />≤50%</label>
+				<label><radio value="五十一到七十" checked="{{form.avgLoadingRate === '五十一到七十'}}" />51-70%</label>
+				<label><radio value="七十一到九十" checked="{{form.avgLoadingRate === '七十一到九十'}}" />71-90%</label>
+				<label><radio value="九十一以上" checked="{{form.avgLoadingRate === '九十一以上'}}" />91%以上</label>
+			</radio-group>
+			<view class="form-label">使用菜篮子车最看重的因素</view>
+			<radio-group bindchange="i" data-k="basketVehicleImportance">
+				<label><radio value="进市区通行的便利性" checked="{{form.basketVehicleImportance === '进市区通行的便利性'}}" />进市区通行的便利性</label>
+				<label><radio value="高速隧道桥通行费的减免" checked="{{form.basketVehicleImportance === '高速隧道桥通行费的减免'}}" />高速/隧道/桥通行费的减免</label>
+				<label><radio value="车身统一菜篮子工程标识带来的企业公益形象提升" checked="{{form.basketVehicleImportance === '车身统一菜篮子工程标识带来的企业公益形象提升'}}" />车身统一"菜篮子工程"标识带来的企业公益形象提升</label>
+				<label><radio value="其他" checked="{{form.basketVehicleImportance === '其他'}}" />其他</label>
+			</radio-group>
+			<view wx:if="{{form.basketVehicleImportance === '其他'}}" class="form-label">其他因素说明</view>
+			<input wx:if="{{form.basketVehicleImportance === '其他'}}" class="form-input" bindinput="i" data-k="otherImportance" value="{{form.otherImportance}}" placeholder="请输入其他因素说明" />
+			<view class="form-label">运营中遇到的主要问题（请按重要性排序）</view>
+			<view wx:for="{{operationalProblems}}" wx:key="order" class="problem-item">
+				<text class="problem-order">{{item.order}}</text>
+				<text class="problem-text">{{item.type}}</text>
+				<view class="problem-actions">
+					<button wx:if="{{index > 0}}" size="mini" bindtap="moveProblemUp" data-index="{{index}}">上移</button>
+					<button wx:if="{{index < operationalProblems.length - 1}}" size="mini" bindtap="moveProblemDown" data-index="{{index}}">下移</button>
+				</view>
+			</view>
+		</view>
+
+		<!-- 按钮 -->
+		<view class="btn-group">
+			<button wx:if="{{currentStep > 0}}" bindtap="prevStep">上一步</button>
+			<button wx:if="{{currentStep < totalSteps - 1}}" type="primary" bindtap="nextStep">下一步</button>
+			<button wx:if="{{currentStep === totalSteps - 1}}" type="primary" bindtap="save">保存草稿</button>
+			<button wx:if="{{currentStep === totalSteps - 1 && form.id}}" type="warn" bindtap="submit">提交</button>
+		</view>
+	</view>
+</view>
+

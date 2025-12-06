@@ -1,0 +1,164 @@
+<template>
+  <div class="login-container">
+    <el-card class="login-card">
+      <template #header>
+        <div class="card-header">
+          <h2>菜篮子工程车填报和展示系统</h2>
+        </div>
+      </template>
+      <el-form
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="loginRules"
+        label-width="80px"
+        @submit.prevent="handleLogin"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input
+            v-model="loginForm.username"
+            placeholder="请输入用户名"
+            prefix-icon="User"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            prefix-icon="Lock"
+            show-password
+            @keyup.enter="handleLogin"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleLogin"
+            style="width: 100%"
+          >
+            登录
+          </el-button>
+        </el-form-item>
+      </el-form>
+      <div class="login-tip">
+        <p>默认账号：admin / 123123</p>
+      </div>
+    </el-card>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { authApi } from '@/api/auth'
+
+const router = useRouter()
+const loginFormRef = ref(null)
+const loading = ref(false)
+
+const loginForm = reactive({
+  username: '',
+  password: ''
+})
+
+const loginRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度至少6位', trigger: 'blur' }
+  ]
+}
+
+const handleLogin = async () => {
+  if (!loginFormRef.value) return
+
+  await loginFormRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true
+      try {
+        const data = await authApi.login(loginForm.username, loginForm.password)
+        
+        console.log('登录响应数据:', data)
+        
+        // 检查响应数据格式
+        if (!data || !data.token) {
+          console.error('登录响应数据格式错误:', data)
+          ElMessage.error('登录响应数据格式错误')
+          return
+        }
+        
+        // 保存token和用户信息
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('username', data.username)
+        localStorage.setItem('nickname', data.nickname || data.username)
+        localStorage.setItem('role', data.role)
+        
+        console.log('Token已保存:', data.token.substring(0, 20) + '...')
+
+        ElMessage.success('登录成功')
+        
+        // 延迟一下再跳转，确保token已保存
+        setTimeout(() => {
+          // 根据角色跳转到不同首页
+          if (data.role === 'ADMIN') {
+            router.push('/dashboard')
+          } else if (data.role === 'COMPANY') {
+            router.push('/companies')
+          } else if (data.role === 'DRIVER') {
+            router.push('/vehicles')
+          } else {
+            router.push('/companies')
+          }
+        }, 100)
+      } catch (error) {
+        console.error('登录失败:', error)
+        ElMessage.error(error.message || '登录失败，请检查用户名和密码')
+      } finally {
+        loading.value = false
+      }
+    }
+  })
+}
+</script>
+
+<style scoped lang="scss">
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  .login-card {
+    width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+    .card-header {
+      text-align: center;
+
+      h2 {
+        margin: 0;
+        color: #303133;
+        font-size: 24px;
+      }
+    }
+
+    .login-tip {
+      margin-top: 20px;
+      text-align: center;
+      color: #909399;
+      font-size: 12px;
+
+      p {
+        margin: 5px 0;
+      }
+    }
+  }
+}
+</style>
+

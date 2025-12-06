@@ -1,0 +1,7 @@
+<view class="page-padding">
+	<view class="card" wx:for="{{items}}" wx:key="id" bindtap="pick" data-item="{{item}}">
+		<view style="font-size:30rpx;font-weight:600;">{{item.name}}</view>
+		<view style="color:#888;margin-top:6rpx;">{{item.address||'-'}}</view>
+	</view>
+</view>
+

@@ -1,0 +1,13 @@
+<view class="page-padding">
+	<view class="card" wx:for="{{items}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+		<view style="display:flex;justify-content:space-between;align-items:center;">
+			<view style="font-size:30rpx;font-weight:600;">{{item.plateNumber}}</view>
+			<text style="color:#666;">{{item.companyName}}</text>
+		</view>
+		<view style="margin-top:8rpx;color:#888;">
+			{{item.vehicleCategory}} / {{item.vehicleType}} / {{item.colorPlate}}
+		</view>
+	</view>
+	<view class="btn" bindtap="goCreate">新增车辆</view>
+</view>
+

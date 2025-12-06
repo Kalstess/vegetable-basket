@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/home/index",
+    "pages/profile/index",
+    "pages/users/index",
+    "pages/company/form/index",
+    "pages/companySelector/index",
+    "pages/vehicle/list/index",
+    "pages/vehicle/form/index",
+    "pages/vehicleStatistics/index",
+    "pages/transport/form/index",
+    "pages/deliveryPoint/list/index",
+    "pages/deliveryPoint/form/index",
+    "pages/route/form/index",
+    "pages/maintenance/form/index",
+    "pages/compliance/form/index",
+    "pages/feedback/form/index",
+    "pages/survey/form/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "菜篮子填报",
+    "navigationBarBackgroundColor": "#1677ff",
+    "navigationBarTextStyle": "white",
+    "backgroundTextStyle": "light",
+    "backgroundColor": "#f5f6f7"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于辅助填写路线点的地址信息"
+    }
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}
+
+

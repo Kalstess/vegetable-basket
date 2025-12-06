@@ -1,0 +1,29 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">车辆</view>
+		<picker mode="selector" range="{{vehicles}}" range-key="plateNumber" value="{{vehicleIndex}}" bindchange="onVehicleChange">
+			<view class="form-input">{{vehicleName || '请选择车辆'}}</view>
+		</picker>
+		<view class="form-label">维护日期</view>
+		<picker mode="date" value="{{form.maintDate}}" bindchange="d" data-k="maintDate">
+			<view class="form-input">{{form.maintDate||'选择日期'}}</view>
+		</picker>
+		<view class="form-label">维护类型</view>
+		<picker range="{{types}}" value="{{tIdx}}" bindchange="pick">
+			<view class="form-input">{{form.maintType||'选择维护类型'}}</view>
+		</picker>
+		<view class="form-label">费用(元)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="cost" value="{{form.cost}}" />
+		<view class="form-label">服务商</view>
+		<input class="form-input" bindinput="i" data-k="serviceProvider" value="{{form.serviceProvider}}" />
+		<view class="form-label">描述</view>
+		<textarea class="form-input" bindinput="i" data-k="description" value="{{form.description}}" />
+		<view class="form-label">下次维护日期</view>
+		<picker mode="date" value="{{form.nextMaintDate}}" bindchange="d" data-k="nextMaintDate">
+			<view class="form-input">{{form.nextMaintDate||'选择日期'}}</view>
+		</picker>
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="submit">提交</view>
+	</view>
+</view>
+

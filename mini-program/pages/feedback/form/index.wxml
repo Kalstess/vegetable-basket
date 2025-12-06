@@ -1,0 +1,36 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">企业</view>
+		<picker mode="selector" range="{{companies}}" range-key="name" value="{{companyIndex}}" bindchange="onCompanyChange">
+			<view class="form-input">{{companyName || '请选择企业'}}</view>
+		</picker>
+		<view class="form-label">车辆(可选)</view>
+		<picker mode="selector" range="{{vehicles}}" range-key="plateNumber" value="{{vehicleIndex}}" bindchange="onVehicleChange" disabled="{{!form.companyId}}">
+			<view class="form-input">{{vehicleName || (form.companyId ? '请选择车辆' : '请先选择企业')}}</view>
+		</picker>
+		<view class="form-label">年份</view>
+		<input class="form-input" type="number" bindinput="i" data-k="reportYear" value="{{form.reportYear}}" />
+		<view class="form-label">月份</view>
+		<input class="form-input" type="number" bindinput="i" data-k="reportMonth" value="{{form.reportMonth}}" />
+		<view class="form-label">主要运营困难</view>
+		<textarea class="form-input" bindinput="i" data-k="mainOperationalDifficulties" value="{{form.mainOperationalDifficulties}}" />
+		<!-- 政策建议：仅管理员可见 -->
+		<view class="form-label" wx:if="{{isAdmin}}">对管理政策的意见建议</view>
+		<textarea wx:if="{{isAdmin}}" class="form-input" bindinput="i" data-k="policySuggestions" value="{{form.policySuggestions}}" />
+		<view class="form-label">联系人</view>
+		<input class="form-input" bindinput="i" data-k="contactPerson" value="{{form.contactPerson}}" />
+		<view class="form-label">联系电话</view>
+		<input class="form-input" bindinput="i" data-k="contactPhone" value="{{form.contactPhone}}" />
+		<!-- 状态：仅管理员可见 -->
+		<view class="form-label" wx:if="{{isAdmin}}">状态</view>
+		<picker wx:if="{{isAdmin}}" mode="selector" range="{{['待处理', '处理中', '已处理', '已关闭']}}" value="{{statusIndex}}" bindchange="onStatusChange">
+			<view class="form-input">{{form.status || '待处理'}}</view>
+		</picker>
+		<!-- 回复：仅管理员可见 -->
+		<view class="form-label" wx:if="{{isAdmin}}">回复</view>
+		<textarea wx:if="{{isAdmin}}" class="form-input" bindinput="i" data-k="response" value="{{form.response}}" />
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="submit">提交</view>
+	</view>
+</view>
+

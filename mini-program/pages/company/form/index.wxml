@@ -1,0 +1,35 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">企业名称</view>
+		<input class="form-input" bindinput="i" data-k="name" value="{{form.name}}" placeholder="必填" />
+		<view class="form-label">企业设立时间</view>
+		<picker mode="date" value="{{form.establishedDate}}" bindchange="d" data-k="establishedDate">
+			<view class="form-input">{{form.establishedDate||'选择日期'}}</view>
+		</picker>
+		<view class="form-label">企业地址</view>
+		<input class="form-input" bindinput="i" data-k="address" value="{{form.address}}" />
+		<view class="form-label">负责人姓名</view>
+		<input class="form-input" bindinput="i" data-k="legalPersonName" value="{{form.legalPersonName}}" />
+		<view class="form-label">负责人电话</view>
+		<input class="form-input" bindinput="i" data-k="legalPersonPhone" value="{{form.legalPersonPhone}}" />
+		<view class="form-label">货运通行证负责人姓名</view>
+		<input class="form-input" bindinput="i" data-k="freightPassContactName" value="{{form.freightPassContactName}}" />
+		<view class="form-label">货运通行证负责人电话</view>
+		<input class="form-input" bindinput="i" data-k="freightPassContactPhone" value="{{form.freightPassContactPhone}}" />
+		<view class="form-label">企业性质</view>
+		<picker range="{{companyTypes}}" value="{{typeIndex}}" bindchange="onTypePick">
+			<view class="form-input">{{form.companyType||'选择企业性质'}}</view>
+		</picker>
+		<view class="form-label">注册资本(万元)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="registeredCapital" value="{{form.registeredCapital}}" />
+		<view class="form-label">近3年营业收入(万元)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="revenue2022" placeholder="2022" value="{{form.revenue2022}}" />
+		<input class="form-input" type="digit" bindinput="i" data-k="revenue2023" placeholder="2023" value="{{form.revenue2023}}" style="margin-top:12rpx;" />
+		<input class="form-input" type="digit" bindinput="i" data-k="revenue2024" placeholder="2024" value="{{form.revenue2024}}" style="margin-top:12rpx;" />
+		<view class="form-label">经营范围（与营业执照一致）</view>
+		<textarea class="form-input" style="min-height:200rpx;" bindinput="i" data-k="businessScope" value="{{form.businessScope}}" />
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="submit">提交</view>
+	</view>
+</view>
+

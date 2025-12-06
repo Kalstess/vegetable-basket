@@ -1,0 +1,11 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">用户名</view>
+		<input class="form-input" placeholder="请输入用户名" bindinput="onUserChange" value="{{username}}" />
+		<view class="form-label">密码</view>
+		<input class="form-input" password placeholder="请输入密码" bindinput="onPassChange" value="{{password}}" />
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="onLogin">登录</view>
+	</view>
+</view>
+

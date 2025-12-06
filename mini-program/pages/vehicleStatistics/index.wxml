@@ -1,0 +1,80 @@
+<view class="page-padding">
+  <!-- 生成统计表单 -->
+  <view class="card" style="margin-bottom:20rpx;">
+    <view class="section-title">生成统计</view>
+    <view class="form-label">选择企业</view>
+    <picker mode="selector" range="{{companies}}" range-key="name" value="{{companyIndex}}" bindchange="onCompanyChange">
+      <view class="form-input">{{companyName || '请选择企业'}}</view>
+    </picker>
+    <view class="form-label">统计日期</view>
+    <picker mode="date" value="{{statDate}}" bindchange="onDateChange">
+      <view class="form-input">{{statDate || '选择日期'}}</view>
+    </picker>
+    <view style="height:16rpx;"></view>
+    <view class="btn" bindtap="generate">生成统计</view>
+  </view>
+  
+  <view class="card" wx:if="{{loading}}">
+    <view style="text-align:center;padding:40rpx;color:#999;">加载中...</view>
+  </view>
+  
+  <view wx:else>
+    <view wx:for="{{list}}" wx:key="id" class="card" style="margin-bottom:20rpx;">
+      <view class="list-item">
+        <view class="list-item-title">{{item.companyName || '未知企业'}}</view>
+        <view class="list-item-desc">统计日期：{{item.statDate}}</view>
+        
+        <view class="section-title" style="margin-top:16rpx;margin-bottom:12rpx;">菜篮子工程车</view>
+        <view class="stat-item">
+          <view class="stat-label">普通(蓝牌)</view>
+          <view class="stat-value">{{item.regularBasketBlue || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">普通(黄牌)</view>
+          <view class="stat-value">{{item.regularBasketYellow || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">冷藏(蓝牌)</view>
+          <view class="stat-value">{{item.coldBasketBlue || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">冷藏(黄牌)</view>
+          <view class="stat-value">{{item.coldBasketYellow || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">国五以上</view>
+          <view class="stat-value">{{item.basketEmissionStandard || 0}}</view>
+        </view>
+        
+        <view class="section-title" style="margin-top:16rpx;margin-bottom:12rpx;">非菜篮子工程车</view>
+        <view class="stat-item">
+          <view class="stat-label">普通(蓝牌)</view>
+          <view class="stat-value">{{item.regularFreightBlue || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">普通(黄牌)</view>
+          <view class="stat-value">{{item.regularFreightYellow || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">冷藏(蓝牌)</view>
+          <view class="stat-value">{{item.coldFreightBlue || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">冷藏(黄牌)</view>
+          <view class="stat-value">{{item.coldFreightYellow || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">国五以上</view>
+          <view class="stat-value">{{item.freightEmissionStandard || 0}}</view>
+        </view>
+        
+        <view class="list-item-actions" style="margin-top:16rpx;">
+          <view class="btn btn-danger" style="padding:12rpx 24rpx;font-size:26rpx;" data-id="{{item.id}}" bindtap="delete">删除</view>
+        </view>
+      </view>
+    </view>
+    
+    <view class="empty-tip" wx:if="{{list.length === 0}}">暂无统计数据</view>
+  </view>
+</view>
+

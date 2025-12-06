@@ -1,0 +1,25 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">车辆</view>
+		<picker mode="selector" range="{{vehicles}}" range-key="plateNumber" value="{{vehicleIndex}}" bindchange="onVehicleChange">
+			<view class="form-input">{{vehicleName || '请选择车辆'}}</view>
+		</picker>
+		<view class="form-label">年份</view>
+		<input class="form-input" type="number" bindinput="i" data-k="reportYear" value="{{form.reportYear}}" />
+		<view class="form-label">月份</view>
+		<input class="form-input" type="number" bindinput="i" data-k="reportMonth" value="{{form.reportMonth}}" />
+		<view class="form-label">是否违规改装</view>
+		<switch checked="{{form.illegalModification}}" bindchange="onSwitch" data-k="illegalModification" />
+		<view class="form-label">交通违法次数</view>
+		<input class="form-input" type="number" bindinput="i" data-k="trafficViolations" value="{{form.trafficViolations}}" />
+		<view class="form-label">交通事故次数</view>
+		<input class="form-input" type="number" bindinput="i" data-k="trafficAccidents" value="{{form.trafficAccidents}}" />
+		<view class="form-label">违规详情</view>
+		<textarea class="form-input" bindinput="i" data-k="violationDetails" value="{{form.violationDetails}}" />
+		<view class="form-label">事故详情</view>
+		<textarea class="form-input" bindinput="i" data-k="accidentDetails" value="{{form.accidentDetails}}" />
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="submit">提交</view>
+	</view>
+</view>
+

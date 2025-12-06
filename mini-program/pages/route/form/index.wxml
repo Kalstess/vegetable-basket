@@ -1,0 +1,35 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">选择车辆</view>
+		<picker range="{{vehicles}}" range-key="plateNumber" value="{{vehicleIndex}}" bindchange="selectVehicle">
+			<view class="form-input">{{form.vehiclePlateNumber||'请选择车辆'}}</view>
+		</picker>
+		<view class="form-label">路线日期</view>
+		<picker mode="date" value="{{form.routeDate}}" bindchange="d" data-k="routeDate">
+			<view class="form-input">{{form.routeDate||'选择日期'}}</view>
+		</picker>
+		<view class="form-label">起终点与途径点</view>
+		<view wx:for="{{points}}" wx:key="idx" style="border:1rpx solid #e5e6eb;border-radius:8rpx;padding:16rpx;margin-bottom:12rpx;">
+			<view style="display:flex;justify-content:space-between;align-items:center;">
+				<view style="color:#666;">序号：{{index+1}}</view>
+				<view class="btn btn-secondary" style="padding:8rpx 16rpx;" bindtap="remove" data-idx="{{index}}">删除</view>
+			</view>
+			<view class="form-label">地点类型</view>
+			<picker range="{{types}}" value="{{item.typeIndex||0}}" bindchange="pickType" data-idx="{{index}}">
+				<view class="form-input">{{item.pointType||'选择类型'}}</view>
+			</picker>
+			<view class="form-label">地址</view>
+			<input class="form-input" bindinput="pi" data-idx="{{index}}" data-k="address" value="{{item.address}}" placeholder="输入地址" />
+			<view class="form-label">到达时间</view>
+			<picker mode="time" value="{{item.arriveTime||'08:00'}}" bindchange="pt" data-idx="{{index}}">
+				<view class="form-input">{{item.arriveTime||'选择时间'}}</view>
+			</picker>
+			<view class="form-label">备注</view>
+			<input class="form-input" bindinput="pi" data-idx="{{index}}" data-k="description" value="{{item.description}}" />
+		</view>
+		<view class="btn btn-secondary" style="margin-bottom:16rpx;" bindtap="addPoint">新增路线点</view>
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="submit">提交路线</view>
+	</view>
+</view>
+

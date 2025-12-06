@@ -1,0 +1,82 @@
+<view class="page-padding">
+	<view class="card" style="margin-bottom:20rpx;">
+		<view style="display:flex;justify-content:space-between;align-items:center;">
+			<view style="font-size:32rpx;font-weight:600;">用户管理</view>
+			<view class="btn" style="padding:12rpx 24rpx;font-size:26rpx;" bindtap="handleAdd">新增用户</view>
+		</view>
+	</view>
+	
+	<view class="card" wx:if="{{loading}}">
+		<view style="text-align:center;padding:40rpx;color:#999;">加载中...</view>
+	</view>
+	
+	<view wx:else>
+		<view class="card" wx:for="{{users}}" wx:key="id" style="margin-bottom:20rpx;">
+			<view class="list-item">
+				<view class="list-item-title">{{item.username}}</view>
+				<view class="list-item-desc">昵称：{{item.nickname || '-'}}</view>
+				<view class="list-item-desc">邮箱：{{item.email || '-'}}</view>
+				<view class="list-item-desc">电话：{{item.phone || '-'}}</view>
+				<view class="list-item-desc">角色：{{item.role === 'ADMIN' ? '管理员' : item.role === 'COMPANY' ? '企业用户' : item.role === 'DRIVER' ? '司机用户' : item.role}}</view>
+				<view class="list-item-desc" wx:if="{{item.company}}">关联企业：{{item.company.name}}</view>
+				<view class="list-item-desc" wx:if="{{item.vehicle}}">关联车辆：{{item.vehicle.plateNumber}}</view>
+				<view class="list-item-desc">状态：<text style="color:{{item.isActive ? '#52c41a' : '#ff4d4f'}}">{{item.isActive ? '启用' : '禁用'}}</text></view>
+				<view class="list-item-actions">
+					<view class="btn" style="padding:12rpx 24rpx;font-size:26rpx;margin-right:16rpx;" data-user="{{item}}" bindtap="handleEdit">编辑</view>
+					<view class="btn-danger btn" style="padding:12rpx 24rpx;font-size:26rpx;" data-user="{{item}}" bindtap="handleDelete">删除</view>
+				</view>
+			</view>
+		</view>
+		
+		<view class="empty-tip" wx:if="{{users.length === 0}}">暂无用户数据</view>
+	</view>
+	
+	<!-- 新增/编辑对话框 -->
+	<view class="dialog-mask" wx:if="{{dialogVisible}}" bindtap="closeDialog">
+		<view class="dialog-content" catchtap="stopPropagation">
+			<view class="dialog-header">
+				<text style="font-size:32rpx;font-weight:600;">{{isEdit ? '编辑用户' : '新增用户'}}</text>
+				<text style="font-size:40rpx;color:#999;" bindtap="closeDialog">×</text>
+			</view>
+			<scroll-view scroll-y style="max-height:70vh;">
+				<view class="form-label">用户名</view>
+				<input class="form-input" value="{{formData.username}}" placeholder="请输入用户名" disabled="{{isEdit}}" data-field="username" bindinput="onFormFieldChange" />
+				
+				<view class="form-label">密码{{isEdit ? '（留空不修改）' : ''}}</view>
+				<input class="form-input" type="password" value="{{formData.password}}" placeholder="请输入密码" data-field="password" bindinput="onFormFieldChange" />
+				
+				<view class="form-label">昵称</view>
+				<input class="form-input" value="{{formData.nickname}}" placeholder="请输入昵称" data-field="nickname" bindinput="onFormFieldChange" />
+				
+				<view class="form-label">邮箱</view>
+				<input class="form-input" type="text" value="{{formData.email}}" placeholder="请输入邮箱" data-field="email" bindinput="onFormFieldChange" />
+				
+				<view class="form-label">电话</view>
+				<input class="form-input" type="text" value="{{formData.phone}}" placeholder="请输入电话" data-field="phone" bindinput="onFormFieldChange" />
+				
+				<view class="form-label">角色</view>
+				<picker mode="selector" range="{{['管理员', '企业用户', '司机用户']}}" range-key="" value="{{formData.role === 'ADMIN' ? 0 : formData.role === 'COMPANY' ? 1 : 2}}" bindchange="onRoleChange">
+					<view class="form-input">{{formData.role === 'ADMIN' ? '管理员' : formData.role === 'COMPANY' ? '企业用户' : '司机用户'}}</view>
+				</picker>
+				
+				<view class="form-label" wx:if="{{formData.role === 'COMPANY'}}">关联企业</view>
+				<picker wx:if="{{formData.role === 'COMPANY'}}" mode="selector" range="{{companies}}" range-key="name" value="{{companyIndex}}" bindchange="onCompanyChange">
+					<view class="form-input">{{companyName || '请选择企业'}}</view>
+				</picker>
+				
+				<view class="form-label" wx:if="{{formData.role === 'DRIVER'}}">关联车辆</view>
+				<picker wx:if="{{formData.role === 'DRIVER'}}" mode="selector" range="{{vehicles}}" range-key="plateNumber" value="{{vehicleIndex}}" bindchange="onVehicleChange">
+					<view class="form-input">{{vehicleName || '请选择车辆'}}</view>
+				</picker>
+				
+				<view class="form-label">状态</view>
+				<switch checked="{{formData.isActive}}" data-field="isActive" bindchange="onSwitchChange" />
+			</scroll-view>
+			<view style="display:flex;gap:20rpx;margin-top:20rpx;padding-top:20rpx;border-top:1rpx solid #e5e6eb;">
+				<view class="btn-secondary btn" style="flex:1;" bindtap="closeDialog">取消</view>
+				<view class="btn" style="flex:1;" bindtap="handleSubmit">确定</view>
+			</view>
+		</view>
+	</view>
+</view>
+

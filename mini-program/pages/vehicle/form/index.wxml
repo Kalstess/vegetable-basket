@@ -1,0 +1,44 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">所属企业</view>
+		<picker mode="selector" range="{{companies}}" range-key="name" value="{{companyIndex}}" bindchange="onCompanyChange">
+			<view class="form-input">{{companyName || '请选择企业'}}</view>
+		</picker>
+		<view class="form-label">车牌号</view>
+		<input class="form-input" bindinput="i" data-k="plateNumber" value="{{form.plateNumber}}" placeholder="唯一标识" />
+		<view class="form-label">车辆类别</view>
+		<picker range="{{vehicleCategories}}" value="{{vcIdx}}" bindchange="pickVC">
+			<view class="form-input">{{form.vehicleCategory||'选择车辆类别'}}</view>
+		</picker>
+		<view class="form-label">车辆类型</view>
+		<picker range="{{vehicleTypes}}" value="{{vtIdx}}" bindchange="pickVT">
+			<view class="form-input">{{form.vehicleType||'选择车辆类型'}}</view>
+		</picker>
+		<view class="form-label">车牌颜色</view>
+		<picker range="{{plateColors}}" value="{{pcIdx}}" bindchange="pickPC">
+			<view class="form-input">{{form.colorPlate||'选择车牌颜色'}}</view>
+		</picker>
+		<view class="form-label">排放标准</view>
+		<input class="form-input" bindinput="i" data-k="emissionStandard" value="{{form.emissionStandard}}" placeholder="如国五/国六" />
+		<view class="form-label">核定载质量(吨)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="approvedLoad" value="{{form.approvedLoad}}" />
+		<view class="form-label">购置时间</view>
+		<picker mode="date" value="{{form.purchaseDate}}" bindchange="d" data-k="purchaseDate">
+			<view class="form-input">{{form.purchaseDate||'选择日期'}}</view>
+		</picker>
+		<view class="form-label">VIN</view>
+		<input class="form-input" bindinput="i" data-k="vin" value="{{form.vin}}" />
+		<view class="form-label">发动机号</view>
+		<input class="form-input" bindinput="i" data-k="engineNo" value="{{form.engineNo}}" />
+		<view class="form-label">行驶证图片</view>
+		<view style="display:flex;gap:12rpx;align-items:center;">
+			<image wx:if="{{dlPreview}}" src="{{dlPreview}}" mode="aspectFill" style="width:180rpx;height:120rpx;border-radius:8rpx;background:#f2f3f5;" />
+			<view class="btn btn-secondary" style="padding:16rpx 20rpx;" bindtap="pickDL">选择/拍摄</view>
+		</view>
+		<view class="form-label">行驶证数据(JSON)</view>
+		<textarea class="form-input" style="min-height:160rpx;" bindinput="i" data-k="drivingLicenseData" value="{{form.drivingLicenseData}}" placeholder="可粘贴OCR结果，或自动随图片以base64提交到填报记录" />
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="submit">保存</view>
+	</view>
+</view>
+

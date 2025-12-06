@@ -1,0 +1,39 @@
+<view class="page-padding">
+	<view class="card">
+		<view class="form-label">车辆</view>
+		<picker mode="selector" range="{{vehicleDisplayNames}}" value="{{vehicleIndex}}" bindchange="onVehicleChange">
+			<view class="form-input">{{vehicleName || '请选择车辆'}}</view>
+		</picker>
+		<view class="form-label">年份</view>
+		<input class="form-input" type="number" bindinput="i" data-k="statYear" value="{{form.statYear}}" placeholder="如 2025" />
+		<view class="form-label">月份</view>
+		<input class="form-input" type="number" bindinput="i" data-k="statMonth" value="{{form.statMonth}}" placeholder="1-12" />
+		
+		<!-- 日相关字段 -->
+		<view class="form-label" style="margin-top:20rpx;font-weight:bold;color:#409EFF;">日相关数据</view>
+		<view class="form-label">日配送次数(次/天)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="dailyDeliveryTimes" value="{{form.dailyDeliveryTimes}}" />
+		<view class="form-label">日配送网点数(个/天)</view>
+		<input class="form-input" type="number" bindinput="i" data-k="dailyDeliveryPoints" value="{{form.dailyDeliveryPoints}}" />
+		<view class="form-label">旺季增加次数(次/天)</view>
+		<input class="form-input" type="number" bindinput="i" data-k="peakSeasonDailyIncreaseTimes" value="{{form.peakSeasonDailyIncreaseTimes}}" />
+		
+		<!-- 月相关字段 -->
+		<view class="form-label" style="margin-top:20rpx;font-weight:bold;color:#409EFF;">月相关数据</view>
+		<view class="form-label">月运输产品数量(吨/月)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="monthProductTon" value="{{form.monthProductTon}}" />
+		<view class="form-label">月运输历程数(公里/月)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="monthKilometers" value="{{form.monthKilometers}}" />
+		<view class="form-label">平均每月配送费用(元/月)</view>
+		<input class="form-input" type="digit" bindinput="i" data-k="monthDeliveryCost" value="{{form.monthDeliveryCost}}" />
+		<view class="form-label">产品种类（多选）</view>
+		<checkbox-group bindchange="onTypes">
+			<label wx:for="{{types}}" wx:key="name" style="display:flex;align-items:center;margin:8rpx 0;">
+				<checkbox value="{{item}}" checked="{{checkedTypes[item]}}" />{{item}}
+			</label>
+		</checkbox-group>
+		<view style="height:24rpx;"></view>
+		<view class="btn" bindtap="submit">提交</view>
+	</view>
+</view>
+
