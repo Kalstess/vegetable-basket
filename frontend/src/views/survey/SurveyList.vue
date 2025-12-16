@@ -4,10 +4,16 @@
       <template #header>
         <div class="card-header">
           <span>问卷调查</span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增问卷
-          </el-button>
+          <div>
+            <el-button @click="goToAnalysis">
+              <el-icon><DataAnalysis /></el-icon>
+              数据分析
+            </el-button>
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>
+              新增问卷
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -241,10 +247,10 @@
         <div v-show="activeStep === 5">
           <el-form-item label="平均装载率">
             <el-radio-group v-model="formData.avgLoadingRate">
-              <el-radio label="小于等于50">≤50%</el-radio>
-              <el-radio label="五十一到七十">51-70%</el-radio>
-              <el-radio label="七十一到九十">71-90%</el-radio>
-              <el-radio label="九十一以上">91%以上</el-radio>
+              <el-radio label="≤50%">≤50%</el-radio>
+              <el-radio label="51-70%">51-70%</el-radio>
+              <el-radio label="71-90%">71-90%</el-radio>
+              <el-radio label="91%以上">91%以上</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="使用菜篮子车最看重的因素">
@@ -313,8 +319,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Rank, ArrowUp, ArrowDown } from '@element-plus/icons-vue'
+import { Plus, Rank, ArrowUp, ArrowDown, DataAnalysis } from '@element-plus/icons-vue'
 import { surveyApi, companyApi } from '@/api'
+import { useRouter } from 'vue-router'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -589,6 +596,12 @@ const getStatusType = (status) => {
     '已驳回': 'danger'
   }
   return statusMap[status] || 'info'
+}
+
+const router = useRouter()
+
+const goToAnalysis = () => {
+  router.push('/survey/analysis')
 }
 
 const getProblemLabel = (value) => {

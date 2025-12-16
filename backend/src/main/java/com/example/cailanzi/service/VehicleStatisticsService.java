@@ -148,12 +148,8 @@ public class VehicleStatisticsService {
                         statistics.setColdBasketYellow(statistics.getColdBasketYellow() + 1);
                     }
                 }
-                // 检查排放标准（国五以上）
-                if (vehicle.getEmissionStandard() != null && 
-                    (vehicle.getEmissionStandard().contains("国五") || 
-                     vehicle.getEmissionStandard().contains("国六") ||
-                     vehicle.getEmissionStandard().contains("国V") ||
-                     vehicle.getEmissionStandard().contains("国VI"))) {
+                // 检查排放标准（国五以上）- 兼容不同表达方式
+                if (isEmissionStandardAboveGuoWu(vehicle.getEmissionStandard())) {
                     statistics.setBasketEmissionStandard(statistics.getBasketEmissionStandard() + 1);
                 }
             } else if (vehicle.getVehicleCategory() == Vehicle.VehicleCategory.非菜篮子工程车) {
@@ -170,12 +166,8 @@ public class VehicleStatisticsService {
                         statistics.setColdFreightYellow(statistics.getColdFreightYellow() + 1);
                     }
                 }
-                // 检查排放标准（国五以上）
-                if (vehicle.getEmissionStandard() != null && 
-                    (vehicle.getEmissionStandard().contains("国五") || 
-                     vehicle.getEmissionStandard().contains("国六") ||
-                     vehicle.getEmissionStandard().contains("国V") ||
-                     vehicle.getEmissionStandard().contains("国VI"))) {
+                // 检查排放标准（国五以上）- 兼容不同表达方式
+                if (isEmissionStandardAboveGuoWu(vehicle.getEmissionStandard())) {
                     statistics.setFreightEmissionStandard(statistics.getFreightEmissionStandard() + 1);
                 }
             }
@@ -201,6 +193,49 @@ public class VehicleStatisticsService {
             VehicleStatistics saved = vehicleStatisticsRepository.save(statistics);
             return convertToDTO(saved);
         }
+    }
+
+    /**
+     * 判断排放标准是否为国五及以上
+     * 兼容多种表达方式：国五、国5、国六、国6、国6b、国V、国VI、国VIb等
+     */
+    private boolean isEmissionStandardAboveGuoWu(String emissionStandard) {
+        if (emissionStandard == null || emissionStandard.trim().isEmpty()) {
+            return false;
+        }
+        
+        String standard = emissionStandard.trim().toUpperCase();
+        
+        // 检查是否包含国五或国5（包括国V）
+        if (standard.contains("国五") || standard.contains("国5") || 
+            standard.contains("国V") || standard.contains("GUOWU") ||
+            standard.contains("GUO5")) {
+            return true;
+        }
+        
+        // 检查是否包含国六或国6（包括国VI、国6b等）
+        if (standard.contains("国六") || standard.contains("国6") || 
+            standard.contains("国VI") || standard.contains("GUOLIU") ||
+            standard.contains("GUO6")) {
+            return true;
+        }
+        
+        // 检查是否包含数字5或6（在"国"字后面）
+        if (standard.contains("国")) {
+            int guoIndex = standard.indexOf("国");
+            if (guoIndex >= 0 && guoIndex + 1 < standard.length()) {
+                char nextChar = standard.charAt(guoIndex + 1);
+                // 检查是否是5、6或V、VI
+                if (nextChar == '5' || nextChar == '6' || 
+                    (guoIndex + 2 < standard.length() && 
+                     (standard.substring(guoIndex + 1, guoIndex + 3).equals("VI") ||
+                      standard.substring(guoIndex + 1, guoIndex + 3).equals("V")))) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 
     private VehicleStatisticsDTO convertToDTO(VehicleStatistics vehicleStatistics) {

@@ -1,5 +1,6 @@
 <template>
   <div class="login-container">
+    <ParticleText text="菜篮子工程" :fontSize="100" :particleSize="2" :particleDistance="80" :particleSpeed="0.5" />
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
@@ -54,6 +55,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authApi } from '@/api/auth'
+import ParticleText from '@/components/ParticleText.vue'
 
 const router = useRouter()
 const loginFormRef = ref(null)
@@ -132,11 +134,19 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%);
+  position: relative;
+  overflow: hidden;
 
   .login-card {
     width: 400px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 10;
+    margin-top: 120px; // 下移登录框，为粒子文字留出空间
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
 
     .card-header {
       text-align: center;

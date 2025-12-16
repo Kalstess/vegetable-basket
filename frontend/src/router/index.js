@@ -81,6 +81,12 @@ const routes = [
         meta: { title: '问卷调查', icon: 'Document', requiresAuth: true, roles: ['ADMIN', 'COMPANY'] }
       },
       {
+        path: 'survey/analysis',
+        name: 'SurveyAnalysis',
+        component: () => import('@/views/survey/SurveyAnalysis.vue'),
+        meta: { title: '问卷数据分析', icon: 'DataAnalysis', requiresAuth: true, roles: ['ADMIN', 'COMPANY'] }
+      },
+      {
         path: 'users',
         name: 'Users',
         component: () => import('@/views/user/UserList.vue'),

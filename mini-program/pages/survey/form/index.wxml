@@ -143,10 +143,10 @@
 		<view wx:if="{{currentStep === 5}}">
 			<view class="form-label">平均装载率</view>
 			<radio-group bindchange="i" data-k="avgLoadingRate">
-				<label><radio value="小于等于50" checked="{{form.avgLoadingRate === '小于等于50'}}" />≤50%</label>
-				<label><radio value="五十一到七十" checked="{{form.avgLoadingRate === '五十一到七十'}}" />51-70%</label>
-				<label><radio value="七十一到九十" checked="{{form.avgLoadingRate === '七十一到九十'}}" />71-90%</label>
-				<label><radio value="九十一以上" checked="{{form.avgLoadingRate === '九十一以上'}}" />91%以上</label>
+				<label><radio value="≤50%" checked="{{form.avgLoadingRate === '≤50%'}}" />≤50%</label>
+				<label><radio value="51-70%" checked="{{form.avgLoadingRate === '51-70%'}}" />51-70%</label>
+				<label><radio value="71-90%" checked="{{form.avgLoadingRate === '71-90%'}}" />71-90%</label>
+				<label><radio value="91%以上" checked="{{form.avgLoadingRate === '91%以上'}}" />91%以上</label>
 			</radio-group>
 			<view class="form-label">使用菜篮子车最看重的因素</view>
 			<radio-group bindchange="i" data-k="basketVehicleImportance">

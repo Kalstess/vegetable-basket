@@ -94,7 +94,20 @@ public class SurveyService {
         survey.setHasColdBasketVehicle(dto.getHasColdBasketVehicle());
         survey.setColdVehicleMultiTemp(dto.getColdVehicleMultiTemp());
         survey.setTempRecordingDevice(parseEnum(dto.getTempRecordingDevice(), SurveyQuestionnaire.TempRecordingDevice.class));
-        survey.setAvgLoadingRate(parseEnum(dto.getAvgLoadingRate(), SurveyQuestionnaire.AvgLoadingRate.class));
+        // 将显示文本转换为枚举值
+        String avgLoadingRateValue = dto.getAvgLoadingRate();
+        if (avgLoadingRateValue != null) {
+            String enumValue = switch (avgLoadingRateValue) {
+                case "≤50%" -> "小于等于50";
+                case "51-70%" -> "五十一到七十";
+                case "71-90%" -> "七十一到九十";
+                case "91%以上" -> "九十一以上";
+                default -> avgLoadingRateValue; // 如果已经是枚举值，直接使用
+            };
+            survey.setAvgLoadingRate(parseEnum(enumValue, SurveyQuestionnaire.AvgLoadingRate.class));
+        } else {
+            survey.setAvgLoadingRate(null);
+        }
         survey.setBasketVehicleImportance(parseEnum(dto.getBasketVehicleImportance(), SurveyQuestionnaire.BasketVehicleImportance.class));
         survey.setOtherImportance(dto.getOtherImportance());
 
@@ -266,7 +279,18 @@ public class SurveyService {
         dto.setHasColdBasketVehicle(survey.getHasColdBasketVehicle());
         dto.setColdVehicleMultiTemp(survey.getColdVehicleMultiTemp());
         dto.setTempRecordingDevice(survey.getTempRecordingDevice() != null ? survey.getTempRecordingDevice().name() : null);
-        dto.setAvgLoadingRate(survey.getAvgLoadingRate() != null ? survey.getAvgLoadingRate().name() : null);
+        // 将枚举值转换为显示文本
+        if (survey.getAvgLoadingRate() != null) {
+            String displayText = switch (survey.getAvgLoadingRate()) {
+                case 小于等于50 -> "≤50%";
+                case 五十一到七十 -> "51-70%";
+                case 七十一到九十 -> "71-90%";
+                case 九十一以上 -> "91%以上";
+            };
+            dto.setAvgLoadingRate(displayText);
+        } else {
+            dto.setAvgLoadingRate(null);
+        }
         dto.setBasketVehicleImportance(survey.getBasketVehicleImportance() != null ? survey.getBasketVehicleImportance().name() : null);
         dto.setOtherImportance(survey.getOtherImportance());
 

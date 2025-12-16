@@ -101,6 +101,18 @@
       </el-col>
     </el-row>
 
+    <!-- 反馈词云图 -->
+    <el-row style="margin-top: 20px;">
+      <el-col :span="24">
+        <el-card>
+          <template #header>
+            <span>主要运营困难词云图</span>
+          </template>
+          <FeedbackWordCloud />
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 详细统计表格 -->
     <el-row style="margin-top: 20px;">
       <el-col :span="24">
@@ -130,6 +142,7 @@ import { OfficeBuilding, Van, DataAnalysis, ChatDotRound } from '@element-plus/i
 import { ElMessage } from 'element-plus'
 import { statisticsApi, companyApi, vehicleApi } from '@/api'
 import * as echarts from 'echarts'
+import FeedbackWordCloud from '@/components/FeedbackWordCloud.vue'
 
 const stats = ref({
   companyCount: 0,
@@ -289,6 +302,7 @@ const initCharts = () => {
 
 const updateCompanyTypeChart = (data) => {
   if (!companyTypeChartInstance) return
+  const total = Object.values(data).reduce((sum, val) => sum + val, 0)
   const option = {
     tooltip: {
       trigger: 'item',
@@ -307,6 +321,9 @@ const updateCompanyTypeChart = (data) => {
           value: data[key],
           name: key
         })),
+        label: {
+          formatter: '{b}: {c} ({d}%)'
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -322,6 +339,7 @@ const updateCompanyTypeChart = (data) => {
 
 const updateVehicleCategoryChart = (data) => {
   if (!vehicleCategoryChartInstance) return
+  const total = Object.values(data).reduce((sum, val) => sum + val, 0)
   const option = {
     tooltip: {
       trigger: 'item',
@@ -343,8 +361,9 @@ const updateVehicleCategoryChart = (data) => {
           borderWidth: 2
         },
         label: {
-          show: false,
-          position: 'center'
+          show: true,
+          formatter: '{b}: {c} ({d}%)',
+          position: 'outside'
         },
         emphasis: {
           label: {
@@ -354,7 +373,7 @@ const updateVehicleCategoryChart = (data) => {
           }
         },
         labelLine: {
-          show: false
+          show: true
         },
         data: Object.keys(data).map(key => ({
           value: data[key],
@@ -368,11 +387,17 @@ const updateVehicleCategoryChart = (data) => {
 
 const updateVehicleTypeChart = (data) => {
   if (!vehicleTypeChartInstance) return
+  const total = Object.values(data).reduce((sum, val) => sum + val, 0)
   const option = {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
         type: 'shadow'
+      },
+      formatter: (params) => {
+        const param = params[0]
+        const percentage = total > 0 ? ((param.value / total) * 100).toFixed(2) : 0
+        return `${param.name}<br/>${param.seriesName}: ${param.value} (${percentage}%)`
       }
     },
     grid: {
@@ -393,6 +418,14 @@ const updateVehicleTypeChart = (data) => {
         name: '车辆数量',
         type: 'bar',
         data: Object.values(data),
+        label: {
+          show: true,
+          position: 'top',
+          formatter: (params) => {
+            const percentage = total > 0 ? ((params.value / total) * 100).toFixed(1) : 0
+            return `${params.value} (${percentage}%)`
+          }
+        },
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#83bff6' },
@@ -417,9 +450,11 @@ const updateVehicleTypeChart = (data) => {
 
 const updateColorPlateChart = (data) => {
   if (!colorPlateChartInstance) return
+  const total = Object.values(data).reduce((sum, val) => sum + val, 0)
   const option = {
     tooltip: {
-      trigger: 'item'
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
     series: [
       {
@@ -430,6 +465,9 @@ const updateColorPlateChart = (data) => {
           value: data[key],
           name: key
         })),
+        label: {
+          formatter: '{b}: {c} ({d}%)'
+        },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
