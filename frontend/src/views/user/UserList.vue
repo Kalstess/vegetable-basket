@@ -78,15 +78,19 @@
         <el-form-item label="角色" prop="role">
           <el-select v-model="formData.role" placeholder="请选择角色" style="width: 100%;" @change="handleRoleChange">
             <el-option label="管理员" value="ADMIN" />
-            <el-option label="企业用户" value="COMPANY" />
+            <el-option label="商务委用户" value="BUSINESS_COMMISSION" />
+            <el-option label="企业管理员" value="COMPANY_ADMIN" />
+            <el-option label="企业普通用户" value="COMPANY_USER" />
+            <!-- 兼容历史角色：企业用户 -->
+            <el-option label="企业用户(兼容)" value="COMPANY" />
             <el-option label="司机用户" value="DRIVER" />
           </el-select>
         </el-form-item>
-        <el-form-item 
-          label="关联企业" 
-          prop="companyId" 
-          v-if="formData.role === 'COMPANY'"
-          :rules="formData.role === 'COMPANY' ? [{ required: true, message: '企业用户必须选择关联企业', trigger: 'change' }] : []"
+        <el-form-item
+          label="关联企业"
+          prop="companyId"
+          v-if="['COMPANY','COMPANY_ADMIN','COMPANY_USER'].includes(formData.role)"
+          :rules="['COMPANY','COMPANY_ADMIN','COMPANY_USER'].includes(formData.role) ? [{ required: true, message: '该角色必须选择关联企业', trigger: 'change' }] : []"
         >
           <el-select v-model="formData.companyId" placeholder="请选择企业" style="width: 100%;" filterable>
             <el-option
@@ -197,7 +201,10 @@ const loadVehicles = async () => {
 const getRoleName = (role) => {
   const roleMap = {
     ADMIN: '管理员',
+    BUSINESS_COMMISSION: '商务委用户',
     COMPANY: '企业用户',
+    COMPANY_ADMIN: '企业管理员',
+    COMPANY_USER: '企业普通用户',
     DRIVER: '司机用户'
   }
   return roleMap[role] || role
@@ -206,7 +213,10 @@ const getRoleName = (role) => {
 const getRoleType = (role) => {
   const typeMap = {
     ADMIN: 'danger',
+    BUSINESS_COMMISSION: 'warning',
     COMPANY: 'primary',
+    COMPANY_ADMIN: 'primary',
+    COMPANY_USER: 'info',
     DRIVER: 'success'
   }
   return typeMap[role] || ''
@@ -253,8 +263,8 @@ const handleSubmit = async () => {
   if (!formRef.value) return
   
   // 验证必填项
-  if (formData.value.role === 'COMPANY' && !formData.value.companyId) {
-    ElMessage.warning('企业用户必须选择关联企业')
+  if (['COMPANY','COMPANY_ADMIN','COMPANY_USER'].includes(formData.value.role) && !formData.value.companyId) {
+    ElMessage.warning('该角色必须选择关联企业')
     return
   }
   if (formData.value.role === 'DRIVER' && !formData.value.vehicleId) {

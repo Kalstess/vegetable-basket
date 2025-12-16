@@ -77,6 +77,6 @@ public class Vehicle extends BaseEntity {
     }
 
     public enum ColorPlate {
-        蓝牌, 黄牌
+        蓝牌, 黄牌, 绿牌
     }
 }

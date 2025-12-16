@@ -12,7 +12,7 @@ Page({
 		companyName: '',
 		vehicleCategories: ['菜篮子工程车','非菜篮子工程车'],
 		vehicleTypes: ['普通','冷藏'],
-		plateColors: ['蓝牌','黄牌'],
+		plateColors: ['蓝牌','黄牌','绿牌'],
 		vcIdx: -1,
 		vtIdx: -1,
 		pcIdx: -1,

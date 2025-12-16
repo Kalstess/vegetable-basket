@@ -27,7 +27,8 @@ public class CompanyService {
     }
 
     public Company save(Company company) {
-        if (companyRepository.existsByName(company.getName())) {
+        // 仅在新建企业时检查名称重复，更新时由 update 方法负责控制
+        if (company.getId() == null && companyRepository.existsByName(company.getName())) {
             throw new IllegalArgumentException("企业名称已存在: " + company.getName());
         }
         return companyRepository.save(company);

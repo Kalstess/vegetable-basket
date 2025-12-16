@@ -9,6 +9,12 @@ const routes = [
     meta: { title: '登录', requiresAuth: false }
   },
   {
+    path: '/company-register',
+    name: 'CompanyRegister',
+    component: () => import('@/views/company/CompanyRegister.vue'),
+    meta: { title: '企业注册', requiresAuth: false }
+  },
+  {
     path: '/',
     component: Layout,
     redirect: '/dashboard',
@@ -18,13 +24,19 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '仪表盘', icon: 'Odometer', requiresAuth: true, roles: ['ADMIN'] }
+        meta: { title: '仪表盘', icon: 'Odometer', requiresAuth: true, roles: ['ADMIN', 'BUSINESS_COMMISSION'] }
+      },
+      {
+        path: 'analytics',
+        name: 'EnterpriseAnalytics',
+        component: () => import('@/views/analytics/EnterpriseTransportDashboard.vue'),
+        meta: { title: '运营分析', icon: 'DataAnalysis', requiresAuth: true, roles: ['ADMIN', 'BUSINESS_COMMISSION', 'COMPANY', 'COMPANY_ADMIN', 'COMPANY_USER'] }
       },
       {
         path: 'companies',
         name: 'Companies',
         component: () => import('@/views/company/CompanyList.vue'),
-        meta: { title: '企业管理', icon: 'OfficeBuilding', requiresAuth: true, roles: ['ADMIN', 'COMPANY'] }
+        meta: { title: '企业管理', icon: 'OfficeBuilding', requiresAuth: true, roles: ['ADMIN', 'BUSINESS_COMMISSION', 'COMPANY', 'COMPANY_ADMIN'] }
       },
       {
         path: 'vehicles',
@@ -72,19 +84,19 @@ const routes = [
         path: 'vehicle-statistics',
         name: 'VehicleStatistics',
         component: () => import('@/views/vehicleStatistics/VehicleStatisticsList.vue'),
-        meta: { title: '车辆统计', icon: 'DataBoard', requiresAuth: true, roles: ['ADMIN'] }
+        meta: { title: '车辆统计', icon: 'DataBoard', requiresAuth: true, roles: ['ADMIN', 'BUSINESS_COMMISSION'] }
       },
       {
         path: 'survey',
         name: 'Survey',
         component: () => import('@/views/survey/SurveyList.vue'),
-        meta: { title: '问卷调查', icon: 'Document', requiresAuth: true, roles: ['ADMIN', 'COMPANY'] }
+        meta: { title: '问卷调查', icon: 'Document', requiresAuth: true, roles: ['ADMIN', 'COMPANY', 'COMPANY_ADMIN', 'COMPANY_USER'] }
       },
       {
         path: 'survey/analysis',
         name: 'SurveyAnalysis',
         component: () => import('@/views/survey/SurveyAnalysis.vue'),
-        meta: { title: '问卷数据分析', icon: 'DataAnalysis', requiresAuth: true, roles: ['ADMIN', 'COMPANY'] }
+        meta: { title: '问卷数据分析', icon: 'DataAnalysis', requiresAuth: true, roles: ['ADMIN', 'BUSINESS_COMMISSION', 'COMPANY', 'COMPANY_ADMIN'] }
       },
       {
         path: 'users',
@@ -131,7 +143,9 @@ router.beforeEach((to, from, next) => {
     // 根据角色跳转到不同首页
     if (role === 'ADMIN') {
       next('/dashboard')
-    } else if (role === 'COMPANY') {
+    } else if (role === 'BUSINESS_COMMISSION') {
+      next('/dashboard')
+    } else if (role === 'COMPANY' || role === 'COMPANY_ADMIN' || role === 'COMPANY_USER') {
       next('/companies')
     } else if (role === 'DRIVER') {
       next('/vehicles')
@@ -144,7 +158,9 @@ router.beforeEach((to, from, next) => {
       // 无权限，跳转到有权限的首页
       if (role === 'ADMIN') {
         next('/dashboard')
-      } else if (role === 'COMPANY') {
+      } else if (role === 'BUSINESS_COMMISSION') {
+        next('/dashboard')
+      } else if (role === 'COMPANY' || role === 'COMPANY_ADMIN' || role === 'COMPANY_USER') {
         next('/companies')
       } else if (role === 'DRIVER') {
         next('/vehicles')

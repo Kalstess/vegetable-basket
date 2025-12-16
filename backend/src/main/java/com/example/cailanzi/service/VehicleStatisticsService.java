@@ -88,6 +88,12 @@ public class VehicleStatisticsService {
         if (vehicleStatistics.getColdBasketYellow() != null) {
             existing.setColdBasketYellow(vehicleStatistics.getColdBasketYellow());
         }
+        if (vehicleStatistics.getRegularBasketGreen() != null) {
+            existing.setRegularBasketGreen(vehicleStatistics.getRegularBasketGreen());
+        }
+        if (vehicleStatistics.getColdBasketGreen() != null) {
+            existing.setColdBasketGreen(vehicleStatistics.getColdBasketGreen());
+        }
         if (vehicleStatistics.getBasketEmissionStandard() != null) {
             existing.setBasketEmissionStandard(vehicleStatistics.getBasketEmissionStandard());
         }
@@ -102,6 +108,12 @@ public class VehicleStatisticsService {
         }
         if (vehicleStatistics.getColdFreightYellow() != null) {
             existing.setColdFreightYellow(vehicleStatistics.getColdFreightYellow());
+        }
+        if (vehicleStatistics.getRegularFreightGreen() != null) {
+            existing.setRegularFreightGreen(vehicleStatistics.getRegularFreightGreen());
+        }
+        if (vehicleStatistics.getColdFreightGreen() != null) {
+            existing.setColdFreightGreen(vehicleStatistics.getColdFreightGreen());
         }
         if (vehicleStatistics.getFreightEmissionStandard() != null) {
             existing.setFreightEmissionStandard(vehicleStatistics.getFreightEmissionStandard());
@@ -134,20 +146,24 @@ public class VehicleStatisticsService {
 
         // 统计各类车辆数量
         for (Vehicle vehicle : vehicles) {
-            if (vehicle.getVehicleCategory() == Vehicle.VehicleCategory.菜篮子工程车) {
-                if (vehicle.getVehicleType() == Vehicle.VehicleType.普通) {
-                    if (vehicle.getColorPlate() == Vehicle.ColorPlate.蓝牌) {
-                        statistics.setRegularBasketBlue(statistics.getRegularBasketBlue() + 1);
-                    } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.黄牌) {
-                        statistics.setRegularBasketYellow(statistics.getRegularBasketYellow() + 1);
+                if (vehicle.getVehicleCategory() == Vehicle.VehicleCategory.菜篮子工程车) {
+                    if (vehicle.getVehicleType() == Vehicle.VehicleType.普通) {
+                        if (vehicle.getColorPlate() == Vehicle.ColorPlate.蓝牌) {
+                            statistics.setRegularBasketBlue(statistics.getRegularBasketBlue() + 1);
+                        } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.黄牌) {
+                            statistics.setRegularBasketYellow(statistics.getRegularBasketYellow() + 1);
+                        } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.绿牌) {
+                            statistics.setRegularBasketGreen(statistics.getRegularBasketGreen() + 1);
+                        }
+                    } else if (vehicle.getVehicleType() == Vehicle.VehicleType.冷藏) {
+                        if (vehicle.getColorPlate() == Vehicle.ColorPlate.蓝牌) {
+                            statistics.setColdBasketBlue(statistics.getColdBasketBlue() + 1);
+                        } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.黄牌) {
+                            statistics.setColdBasketYellow(statistics.getColdBasketYellow() + 1);
+                        } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.绿牌) {
+                            statistics.setColdBasketGreen(statistics.getColdBasketGreen() + 1);
+                        }
                     }
-                } else if (vehicle.getVehicleType() == Vehicle.VehicleType.冷藏) {
-                    if (vehicle.getColorPlate() == Vehicle.ColorPlate.蓝牌) {
-                        statistics.setColdBasketBlue(statistics.getColdBasketBlue() + 1);
-                    } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.黄牌) {
-                        statistics.setColdBasketYellow(statistics.getColdBasketYellow() + 1);
-                    }
-                }
                 // 检查排放标准（国五以上）- 兼容不同表达方式
                 if (isEmissionStandardAboveGuoWu(vehicle.getEmissionStandard())) {
                     statistics.setBasketEmissionStandard(statistics.getBasketEmissionStandard() + 1);
@@ -158,12 +174,16 @@ public class VehicleStatisticsService {
                         statistics.setRegularFreightBlue(statistics.getRegularFreightBlue() + 1);
                     } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.黄牌) {
                         statistics.setRegularFreightYellow(statistics.getRegularFreightYellow() + 1);
+                    } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.绿牌) {
+                        statistics.setRegularFreightGreen(statistics.getRegularFreightGreen() + 1);
                     }
                 } else if (vehicle.getVehicleType() == Vehicle.VehicleType.冷藏) {
                     if (vehicle.getColorPlate() == Vehicle.ColorPlate.蓝牌) {
                         statistics.setColdFreightBlue(statistics.getColdFreightBlue() + 1);
                     } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.黄牌) {
                         statistics.setColdFreightYellow(statistics.getColdFreightYellow() + 1);
+                    } else if (vehicle.getColorPlate() == Vehicle.ColorPlate.绿牌) {
+                        statistics.setColdFreightGreen(statistics.getColdFreightGreen() + 1);
                     }
                 }
                 // 检查排放标准（国五以上）- 兼容不同表达方式
@@ -181,11 +201,15 @@ public class VehicleStatisticsService {
             existingStats.setRegularBasketYellow(statistics.getRegularBasketYellow());
             existingStats.setColdBasketBlue(statistics.getColdBasketBlue());
             existingStats.setColdBasketYellow(statistics.getColdBasketYellow());
+            existingStats.setRegularBasketGreen(statistics.getRegularBasketGreen());
+            existingStats.setColdBasketGreen(statistics.getColdBasketGreen());
             existingStats.setBasketEmissionStandard(statistics.getBasketEmissionStandard());
             existingStats.setRegularFreightBlue(statistics.getRegularFreightBlue());
             existingStats.setRegularFreightYellow(statistics.getRegularFreightYellow());
             existingStats.setColdFreightBlue(statistics.getColdFreightBlue());
             existingStats.setColdFreightYellow(statistics.getColdFreightYellow());
+            existingStats.setRegularFreightGreen(statistics.getRegularFreightGreen());
+            existingStats.setColdFreightGreen(statistics.getColdFreightGreen());
             existingStats.setFreightEmissionStandard(statistics.getFreightEmissionStandard());
             VehicleStatistics updated = vehicleStatisticsRepository.save(existingStats);
             return convertToDTO(updated);
@@ -246,13 +270,17 @@ public class VehicleStatisticsService {
         dto.setStatDate(vehicleStatistics.getStatDate());
         dto.setRegularBasketBlue(vehicleStatistics.getRegularBasketBlue());
         dto.setRegularBasketYellow(vehicleStatistics.getRegularBasketYellow());
+        dto.setRegularBasketGreen(vehicleStatistics.getRegularBasketGreen());
         dto.setColdBasketBlue(vehicleStatistics.getColdBasketBlue());
         dto.setColdBasketYellow(vehicleStatistics.getColdBasketYellow());
+        dto.setColdBasketGreen(vehicleStatistics.getColdBasketGreen());
         dto.setBasketEmissionStandard(vehicleStatistics.getBasketEmissionStandard());
         dto.setRegularFreightBlue(vehicleStatistics.getRegularFreightBlue());
         dto.setRegularFreightYellow(vehicleStatistics.getRegularFreightYellow());
+        dto.setRegularFreightGreen(vehicleStatistics.getRegularFreightGreen());
         dto.setColdFreightBlue(vehicleStatistics.getColdFreightBlue());
         dto.setColdFreightYellow(vehicleStatistics.getColdFreightYellow());
+        dto.setColdFreightGreen(vehicleStatistics.getColdFreightGreen());
         dto.setFreightEmissionStandard(vehicleStatistics.getFreightEmissionStandard());
         return dto;
     }

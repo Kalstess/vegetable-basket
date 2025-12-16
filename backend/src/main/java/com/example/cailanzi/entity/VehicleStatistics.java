@@ -39,6 +39,12 @@ public class VehicleStatistics extends BaseEntity {
     @Column(name = "cold_basket_yellow")
     private Integer coldBasketYellow = 0;
 
+    @Column(name = "regular_basket_green")
+    private Integer regularBasketGreen = 0;
+
+    @Column(name = "cold_basket_green")
+    private Integer coldBasketGreen = 0;
+
     @Column(name = "basket_emission_standard")
     private Integer basketEmissionStandard = 0;
 
@@ -57,4 +63,10 @@ public class VehicleStatistics extends BaseEntity {
 
     @Column(name = "freight_emission_standard")
     private Integer freightEmissionStandard = 0;
+
+    @Column(name = "regular_freight_green")
+    private Integer regularFreightGreen = 0;
+
+    @Column(name = "cold_freight_green")
+    private Integer coldFreightGreen = 0;
 }

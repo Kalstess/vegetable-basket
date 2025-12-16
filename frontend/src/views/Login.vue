@@ -45,6 +45,9 @@
       </el-form>
       <div class="login-tip">
         <p>默认账号：admin / 123123</p>
+        <p class="register-link">
+          尚未入驻？<a href="javascript:;" @click.prevent="goToRegister">企业自助注册</a>
+        </p>
       </div>
     </el-card>
   </div>
@@ -126,6 +129,10 @@ const handleLogin = async () => {
     }
   })
 }
+
+const goToRegister = () => {
+  router.push({ path: '/company-register' })
+}
 </script>
 
 <style scoped lang="scss">
@@ -166,6 +173,12 @@ const handleLogin = async () => {
 
       p {
         margin: 5px 0;
+      }
+
+      .register-link a {
+        color: #409eff;
+        text-decoration: underline;
+        cursor: pointer;
       }
     }
   }

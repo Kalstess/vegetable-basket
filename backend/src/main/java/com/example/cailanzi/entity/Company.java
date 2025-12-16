@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -58,7 +59,34 @@ public class Company extends BaseEntity {
     @Column(name = "business_scope", columnDefinition = "TEXT")
     private String businessScope;
 
+    /**
+     * 企业注册/审核状态：
+     * - PENDING: 企业通过自助注册提交，待商务委审核；
+     * - APPROVED: 商务委审核通过，可正常使用；
+     * - REJECTED: 审核不通过；
+     * - DISABLED: 后续被停用。
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 32)
+    private CompanyStatus status = CompanyStatus.PENDING;
+
+    /**
+     * 审核备注与时间，仅商务委/管理员可维护。
+     */
+    @Column(name = "audit_remark", length = 500)
+    private String auditRemark;
+
+    @Column(name = "audited_at")
+    private LocalDateTime auditedAt;
+
     public enum CompanyType {
         国有, 民营, 其他
+    }
+
+    public enum CompanyStatus {
+        PENDING,    // 待审核
+        APPROVED,   // 已通过
+        REJECTED,   // 已驳回
+        DISABLED    // 已停用
     }
 }

@@ -8,6 +8,7 @@ import com.example.cailanzi.repository.UserRepository;
 import com.example.cailanzi.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final VehicleRepository vehicleRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public List<User> findAll() {
         return userRepository.findAll();
@@ -54,21 +56,22 @@ public class UserService {
             throw new IllegalArgumentException("用户名已存在");
         }
 
-        // 验证角色值
+        // 验证角色值，默认为企业普通用户
         if (user.getRole() == null) {
-            log.warn("User role is null, setting default to COMPANY");
-            user.setRole(User.UserRole.COMPANY);
-        } else {
-            log.debug("User role: {}", user.getRole().name());
+            log.warn("User role is null, setting default to COMPANY_USER");
+            user.setRole(User.UserRole.COMPANY_USER);
         }
+        log.debug("User role: {}", user.getRole().name());
 
-        // 编码密码
+        // 编码密码（使用 BCrypt）
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(encodePassword(user.getPassword()));
         }
 
-        // 验证企业关联（如果是企业用户）
-        if (user.getRole() == User.UserRole.COMPANY) {
+        // 验证企业关联（如果是企业管理员/企业用户/历史 COMPANY 角色）
+        if (user.getRole() == User.UserRole.COMPANY_ADMIN
+                || user.getRole() == User.UserRole.COMPANY_USER
+                || user.getRole() == User.UserRole.COMPANY) {
             if (user.getCompany() != null && user.getCompany().getId() != null) {
                 Company company = companyRepository.findById(user.getCompany().getId())
                         .orElseThrow(() -> new IllegalArgumentException("企业不存在"));
@@ -114,12 +117,12 @@ public class UserService {
             user.setIsActive(userDetails.getIsActive());
         }
 
-        // 更新密码（如果提供）
+        // 更新密码（如果提供，使用 BCrypt）
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
             user.setPassword(encodePassword(userDetails.getPassword()));
         }
 
-        // 更新角色（仅管理员可以修改）
+        // 更新角色（真正的权限控制在 Controller 中校验这里不判断操作者，仅保证数据合理）
         if (userDetails.getRole() != null) {
             user.setRole(userDetails.getRole());
         }
@@ -127,7 +130,9 @@ public class UserService {
         // 更新角色时，需要重新验证关联
         if (userDetails.getRole() != null && !userDetails.getRole().equals(user.getRole())) {
             // 角色变更，需要重新设置关联
-            if (userDetails.getRole() == User.UserRole.COMPANY) {
+            if (userDetails.getRole() == User.UserRole.COMPANY_ADMIN
+                    || userDetails.getRole() == User.UserRole.COMPANY_USER
+                    || userDetails.getRole() == User.UserRole.COMPANY) {
                 // 变为企业用户，必须关联企业
                 if (userDetails.getCompany() == null || userDetails.getCompany().getId() == null) {
                     throw new IllegalArgumentException("企业用户必须关联企业");
@@ -147,7 +152,9 @@ public class UserService {
             user.setCompany(company);
         } else if (userDetails.getCompany() == null) {
             // 如果角色是企业用户，不能清除企业关联
-            if (user.getRole() == User.UserRole.COMPANY) {
+            if (user.getRole() == User.UserRole.COMPANY_ADMIN
+                    || user.getRole() == User.UserRole.COMPANY_USER
+                    || user.getRole() == User.UserRole.COMPANY) {
                 // 保持原有企业关联
             } else {
                 // 其他角色可以清除企业关联
@@ -199,7 +206,7 @@ public class UserService {
             user.setPhone(userDetails.getPhone());
         }
 
-        // 更新密码（如果提供）
+        // 更新密码（如果提供，使用 BCrypt）
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
             user.setPassword(encodePassword(userDetails.getPassword()));
         }
@@ -207,8 +214,13 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // 密码编码（使用SHA-256）
+    // 密码编码（使用 BCrypt，为兼容历史逻辑保留 SHA-256 方法）
     private String encodePassword(String password) {
+        return passwordEncoder.encode(password);
+    }
+
+    @SuppressWarnings("unused")
+    private String encodeSha256(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));

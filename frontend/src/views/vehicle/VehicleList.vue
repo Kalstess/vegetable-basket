@@ -97,6 +97,7 @@
           <el-select v-model="formData.colorPlate" placeholder="请选择颜色" style="width: 100%;">
             <el-option label="蓝牌" value="蓝牌" />
             <el-option label="黄牌" value="黄牌" />
+            <el-option label="绿牌" value="绿牌" />
           </el-select>
         </el-form-item>
 

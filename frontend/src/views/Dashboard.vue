@@ -129,6 +129,7 @@
             <el-table-column prop="coldCount" label="冷藏车辆" width="100" align="center" />
             <el-table-column prop="blueCount" label="蓝牌" width="80" align="center" />
             <el-table-column prop="yellowCount" label="黄牌" width="80" align="center" />
+            <el-table-column prop="greenCount" label="绿牌" width="80" align="center" />
           </el-table>
         </el-card>
       </el-col>
@@ -218,7 +219,7 @@ const loadStats = async () => {
     const vehicleStats = {}
     const categoryStats = { '菜篮子工程车': 0, '非菜篮子工程车': 0 }
     const typeStats = { '普通': 0, '冷藏': 0 }
-    const colorStats = { '蓝牌': 0, '黄牌': 0 }
+    const colorStats = { '蓝牌': 0, '黄牌': 0, '绿牌': 0 }
 
     if (Array.isArray(vehiclesData)) {
       vehiclesData.forEach(vehicle => {
@@ -247,7 +248,8 @@ const loadStats = async () => {
               regularCount: 0,
               coldCount: 0,
               blueCount: 0,
-              yellowCount: 0
+              yellowCount: 0,
+              greenCount: 0
             }
           }
           vehicleStats[vehicle.companyId].vehicleCount++
@@ -265,6 +267,8 @@ const loadStats = async () => {
             vehicleStats[vehicle.companyId].blueCount++
           } else if (vehicle.colorPlate === '黄牌') {
             vehicleStats[vehicle.companyId].yellowCount++
+          } else if (vehicle.colorPlate === '绿牌') {
+            vehicleStats[vehicle.companyId].greenCount++
           }
         }
       })

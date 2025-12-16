@@ -37,15 +37,19 @@
         <el-table-column label="菜篮子工程车" align="center">
           <el-table-column prop="regularBasketBlue" label="普通(蓝)" width="80" />
           <el-table-column prop="regularBasketYellow" label="普通(黄)" width="80" />
+          <el-table-column prop="regularBasketGreen" label="普通(绿)" width="80" />
           <el-table-column prop="coldBasketBlue" label="冷藏(蓝)" width="80" />
           <el-table-column prop="coldBasketYellow" label="冷藏(黄)" width="80" />
+          <el-table-column prop="coldBasketGreen" label="冷藏(绿)" width="80" />
           <el-table-column prop="basketEmissionStandard" label="国五以上" width="100" />
         </el-table-column>
         <el-table-column label="非菜篮子工程车" align="center">
           <el-table-column prop="regularFreightBlue" label="普通(蓝)" width="80" />
           <el-table-column prop="regularFreightYellow" label="普通(黄)" width="80" />
+          <el-table-column prop="regularFreightGreen" label="普通(绿)" width="80" />
           <el-table-column prop="coldFreightBlue" label="冷藏(蓝)" width="80" />
           <el-table-column prop="coldFreightYellow" label="冷藏(黄)" width="80" />
+          <el-table-column prop="coldFreightGreen" label="冷藏(绿)" width="80" />
           <el-table-column prop="freightEmissionStandard" label="国五以上" width="100" />
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
@@ -67,13 +71,17 @@
         <el-descriptions-item label="统计日期">{{ currentStats.statDate }}</el-descriptions-item>
         <el-descriptions-item label="普通菜篮子工程车(蓝牌)">{{ currentStats.regularBasketBlue || 0 }}</el-descriptions-item>
         <el-descriptions-item label="普通菜篮子工程车(黄牌)">{{ currentStats.regularBasketYellow || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="普通菜篮子工程车(绿牌)">{{ currentStats.regularBasketGreen || 0 }}</el-descriptions-item>
         <el-descriptions-item label="冷藏菜篮子工程车(蓝牌)">{{ currentStats.coldBasketBlue || 0 }}</el-descriptions-item>
         <el-descriptions-item label="冷藏菜篮子工程车(黄牌)">{{ currentStats.coldBasketYellow || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="冷藏菜篮子工程车(绿牌)">{{ currentStats.coldBasketGreen || 0 }}</el-descriptions-item>
         <el-descriptions-item label="菜篮子工程车国五以上">{{ currentStats.basketEmissionStandard || 0 }}</el-descriptions-item>
         <el-descriptions-item label="普通货运车(蓝牌)">{{ currentStats.regularFreightBlue || 0 }}</el-descriptions-item>
         <el-descriptions-item label="普通货运车(黄牌)">{{ currentStats.regularFreightYellow || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="普通货运车(绿牌)">{{ currentStats.regularFreightGreen || 0 }}</el-descriptions-item>
         <el-descriptions-item label="冷藏货运车(蓝牌)">{{ currentStats.coldFreightBlue || 0 }}</el-descriptions-item>
         <el-descriptions-item label="冷藏货运车(黄牌)">{{ currentStats.coldFreightYellow || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="冷藏货运车(绿牌)">{{ currentStats.coldFreightGreen || 0 }}</el-descriptions-item>
         <el-descriptions-item label="非菜篮子工程车国五以上">{{ currentStats.freightEmissionStandard || 0 }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
