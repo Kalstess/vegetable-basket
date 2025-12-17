@@ -73,7 +73,33 @@ cailanzi/
 └── README.md               # 项目总览（本文件）
 ```
 
-> 说明：历史 README 中提到的 `docker/`、`docker-compose.yml` 当前仓库中 **并不存在**，如需容器化可后续自行补充。
+> 说明：项目已包含 Docker 配置文件，可直接使用 Docker Compose 进行部署。
+
+---
+
+## 🚀 服务器部署
+
+### Docker 部署（推荐）
+
+项目已配置完整的 Docker 部署方案，支持一键部署到服务器。
+
+**详细部署文档**：请查看 [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md)
+
+**快速部署**：
+```bash
+# 1. 上传项目到服务器
+# 2. 修改 docker-compose.yml 中的数据库密码
+# 3. 运行部署脚本
+bash deploy.sh
+
+# 或手动部署
+docker-compose up -d --build
+```
+
+**部署要求**：
+- CentOS 7 或兼容的 Linux 系统
+- 2核CPU / 4GB内存 / 50GB硬盘（最低配置）
+- 已安装 Docker 和 Docker Compose（部署脚本可自动安装）
 
 ---
 
