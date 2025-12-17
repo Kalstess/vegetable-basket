@@ -98,8 +98,14 @@ docker-compose up -d --build
 
 **部署要求**：
 - CentOS 7 或兼容的 Linux 系统
-- 2核CPU / 4GB内存 / 50GB硬盘（最低配置）
+- **推荐配置**：2核CPU / 4GB内存 / 50GB硬盘
+- **最低配置**：2核CPU / **2GB内存** / 50GB硬盘（适用于学习环境，并发10人左右）
 - 已安装 Docker 和 Docker Compose（部署脚本可自动安装）
+
+> **内存说明**：
+> - **4GB 内存**：推荐配置，系统运行流畅
+> - **2GB 内存**：可以使用，需使用 `docker-compose.low-memory.yml` 配置文件
+> - 详细内存优化说明请查看：[内存优化指南](docs/DEPLOYMENT_GUIDE.md#53-低内存配置2gb-内存服务器)
 
 ---
 

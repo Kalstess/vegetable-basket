@@ -1,0 +1,90 @@
+version: '3.9'
+
+# 低内存配置版本（适用于 2GB 内存服务器）
+# 适用于学习环境，并发 10 人左右
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: cailanzi-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 111111        # 建议上线前修改
+      MYSQL_DATABASE: cailanzi
+      TZ: Asia/Shanghai
+    # 内存优化配置：限制 MySQL 内存使用
+    command: [
+      "--character-set-server=utf8mb4",
+      "--collation-server=utf8mb4_unicode_ci",
+      "--default-authentication-plugin=mysql_native_password",
+      "--innodb-buffer-pool-size=256M",
+      "--max-connections=50",
+      "--table-open-cache=512",
+      "--thread-cache-size=8",
+      "--query-cache-size=0",
+      "--tmp-table-size=16M",
+      "--max-heap-table-size=16M",
+      "--key-buffer-size=8M",
+      "--sort-buffer-size=2M",
+      "--read-buffer-size=1M",
+      "--read-rnd-buffer-size=1M",
+      "--join-buffer-size=1M",
+      "--thread-stack=256K"
+    ]
+    # MySQL 内存限制：512MB
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    ports:
+      - "3306:3306"   # 如服务器上已有 MySQL，可修改为其它端口
+    volumes:
+      - ./docs/cailanzi_localhost-2025_12_16_17_30_59-dump.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - db-data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cailanzi-backend
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cailanzi?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 111111
+      # JVM 内存优化参数：堆内存 512MB，元空间 256MB，使用 G1 垃圾回收器
+      JAVA_OPTS: "-Xms256m -Xmx512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 512M
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cailanzi-frontend
+    restart: always
+    # Nginx 内存限制：128MB
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    depends_on:
+      - backend
+    ports:
+      - "80:80"     # 对外暴露 Web 管理界面
+
+volumes:
+  db-data:
+
