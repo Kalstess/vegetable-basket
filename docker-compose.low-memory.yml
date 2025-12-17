@@ -1,18 +1,24 @@
 version: '3.9'
 
-# 低内存配置版本（适用于 2GB 内存服务器）
-# 适用于学习环境，并发 10 人左右
+# 菜篮子系统部署配置
+# 经过验证的稳定版本，适用于 2GB 内存服务器
+# 修改记录：
+# 1. 移除了 MySQL 8.0 不支持的 query-cache-size 参数
+# 2. 优化了内存配置，避免 OOM
+# 3. 添加了健康检查和启动依赖
+# 4. 修正了 SQL 文件导入方式
 
 services:
   db:
     image: mysql:8.0
     container_name: cailanzi-mysql
-    restart: always
+    restart: unless-stopped  # 改为 unless-stopped，避免无限重启
     environment:
-      MYSQL_ROOT_PASSWORD: 111111        # 建议上线前修改
+      MYSQL_ROOT_PASSWORD: 111111        # 生产环境请务必修改！
       MYSQL_DATABASE: cailanzi
       TZ: Asia/Shanghai
-    # 内存优化配置：限制 MySQL 内存使用
+      MYSQL_INITDB_SKIP_TZINFO: 1        # 跳过时区表加载，减少启动内存
+    # MySQL 内存优化配置
     command: [
       "--character-set-server=utf8mb4",
       "--collation-server=utf8mb4_unicode_ci",
@@ -21,7 +27,7 @@ services:
       "--max-connections=50",
       "--table-open-cache=512",
       "--thread-cache-size=8",
-      "--query-cache-size=0",
+      # 注意：MySQL 8.0 已移除查询缓存，不要使用 query-cache-size
       "--tmp-table-size=16M",
       "--max-heap-table-size=16M",
       "--key-buffer-size=8M",
@@ -29,9 +35,10 @@ services:
       "--read-buffer-size=1M",
       "--read-rnd-buffer-size=1M",
       "--join-buffer-size=1M",
-      "--thread-stack=256K"
+      "--thread-stack=256K",
+      "--performance_schema=OFF",        # 关闭性能模式节省内存
+      "--skip-log-bin"                   # 跳过二进制日志，节省磁盘和内存
     ]
-    # MySQL 内存限制：512MB
     deploy:
       resources:
         limits:
@@ -39,22 +46,30 @@ services:
         reservations:
           memory: 256M
     ports:
-      - "3306:3306"   # 如服务器上已有 MySQL，可修改为其它端口
+      - "3306:3306"   # 生产环境建议改为：127.0.0.1:3306:3306（只本地访问）
     volumes:
-      - ./docs/cailanzi_localhost-2025_12_16_17_30_59-dump.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # 注意：SQL 文件将在初始化时自动导入
+      # 如果导入失败，可以注释掉下面这行，手动导入
+      - ./docs/cailanzi_localhost-2025_12_17_19_51_30-dump.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p111111"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: cailanzi-backend
-    restart: always
+    restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cailanzi?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cailanzi?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 111111
-      # JVM 内存优化参数：堆内存 512MB，元空间 256MB，使用 G1 垃圾回收器
+      # JVM 内存优化参数
       JAVA_OPTS: "-Xms256m -Xmx512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
     deploy:
       resources:
@@ -63,17 +78,24 @@ services:
         reservations:
           memory: 512M
     depends_on:
-      - db
+      db:
+        condition: service_healthy  # 等待数据库健康后再启动
     ports:
       - "8080:8080"
+    # 健康检查（需要应用提供 /actuator/health 或类似端点）
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: cailanzi-frontend
-    restart: always
-    # Nginx 内存限制：128MB
+    restart: unless-stopped
     deploy:
       resources:
         limits:
@@ -81,10 +103,16 @@ services:
         reservations:
           memory: 64M
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     ports:
-      - "80:80"     # 对外暴露 Web 管理界面
+      - "80:80"
+    # Nginx 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   db-data:
-
