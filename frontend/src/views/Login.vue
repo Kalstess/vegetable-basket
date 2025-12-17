@@ -110,15 +110,20 @@ const handleLogin = async () => {
         // 延迟一下再跳转，确保token已保存
         setTimeout(() => {
           // 根据角色跳转到不同首页
-          if (data.role === 'ADMIN') {
-            router.push('/dashboard')
-          } else if (data.role === 'COMPANY') {
-            router.push('/companies')
+          let targetPath = '/companies' // 默认
+          if (data.role === 'ADMIN' || data.role === 'BUSINESS_COMMISSION') {
+            targetPath = '/dashboard'
+          } else if (data.role === 'COMPANY' || data.role === 'COMPANY_ADMIN' || data.role === 'COMPANY_USER') {
+            targetPath = '/companies'
           } else if (data.role === 'DRIVER') {
-            router.push('/vehicles')
-          } else {
-            router.push('/companies')
+            targetPath = '/vehicles'
           }
+          router.push(targetPath).catch(err => {
+            // 忽略导航重复的错误
+            if (err.name !== 'NavigationDuplicated') {
+              console.error('路由跳转失败:', err)
+            }
+          })
         }, 100)
       } catch (error) {
         console.error('登录失败:', error)

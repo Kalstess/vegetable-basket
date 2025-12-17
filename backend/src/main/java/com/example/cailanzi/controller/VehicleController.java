@@ -33,9 +33,15 @@ public class VehicleController {
         
         List<VehicleDTO> vehicles;
         
-        if (currentUser.getRole() == User.UserRole.ADMIN) {
+        if (currentUser.getRole() == User.UserRole.ADMIN 
+                || currentUser.getRole() == User.UserRole.BUSINESS_COMMISSION) {
+            // 管理员和商务委可以查看所有车辆
             vehicles = vehicleService.findAll();
-        } else if (currentUser.getRole() == User.UserRole.COMPANY && currentUser.getCompany() != null) {
+        } else if ((currentUser.getRole() == User.UserRole.COMPANY 
+                || currentUser.getRole() == User.UserRole.COMPANY_ADMIN
+                || currentUser.getRole() == User.UserRole.COMPANY_USER) 
+                && currentUser.getCompany() != null) {
+            // 企业用户（包括企业管理员和普通用户）查看本企业的车辆
             vehicles = vehicleService.findByCompanyId(currentUser.getCompany().getId());
         } else if (currentUser.getRole() == User.UserRole.DRIVER && currentUser.getVehicle() != null) {
             vehicles = vehicleService.findById(currentUser.getVehicle().getId())

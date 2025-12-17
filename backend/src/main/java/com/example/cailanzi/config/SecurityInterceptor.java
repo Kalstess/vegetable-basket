@@ -33,6 +33,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
         log.info("Request path: {}", path);
         
         if (path.startsWith("/auth/login") || 
+            path.startsWith("/company-registration/register") ||
             path.startsWith("/swagger") || 
             path.startsWith("/v3/api-docs")) {
             log.info("Public path, allowing access: {}", path);

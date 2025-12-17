@@ -33,9 +33,15 @@ public class SurveyController {
         
         List<SurveyQuestionnaireDTO> surveys;
         
-        if (currentUser.getRole() == User.UserRole.ADMIN) {
+        if (currentUser.getRole() == User.UserRole.ADMIN 
+                || currentUser.getRole() == User.UserRole.BUSINESS_COMMISSION) {
+            // 管理员和商务委可以查看所有问卷
             surveys = surveyService.findAll();
-        } else if (currentUser.getRole() == User.UserRole.COMPANY && currentUser.getCompany() != null) {
+        } else if ((currentUser.getRole() == User.UserRole.COMPANY 
+                || currentUser.getRole() == User.UserRole.COMPANY_ADMIN
+                || currentUser.getRole() == User.UserRole.COMPANY_USER) 
+                && currentUser.getCompany() != null) {
+            // 企业用户（包括企业管理员和普通用户）只能查看自己企业的问卷
             surveys = surveyService.findByCompanyId(currentUser.getCompany().getId());
         } else {
             surveys = List.of();
@@ -53,7 +59,17 @@ public class SurveyController {
         }
         
         return surveyService.findById(id)
-                .map(survey -> ResponseEntity.ok(ResponseMessage.success(survey)))
+                .map(survey -> {
+                    // 权限检查：企业用户只能查看自己企业的问卷
+                    if (currentUser.getRole() != User.UserRole.ADMIN 
+                            && currentUser.getRole() != User.UserRole.BUSINESS_COMMISSION) {
+                        if (currentUser.getCompany() == null 
+                                || !survey.getCompanyId().equals(currentUser.getCompany().getId())) {
+                            return ResponseEntity.status(403).body(ResponseMessage.<SurveyQuestionnaireDTO>error(403, "无权限访问该问卷"));
+                        }
+                    }
+                    return ResponseEntity.ok(ResponseMessage.success(survey));
+                })
                 .orElse(ResponseEntity.status(404).body(ResponseMessage.error(404, "问卷调查记录不存在")));
     }
 
@@ -64,6 +80,24 @@ public class SurveyController {
         User currentUser = UserContext.getCurrentUser(request);
         if (currentUser == null) {
             return ResponseEntity.status(401).body(ResponseMessage.error(401, "未授权"));
+        }
+        
+        // 权限检查：企业用户只能创建或修改自己企业的问卷
+        if (currentUser.getRole() != User.UserRole.ADMIN 
+                && currentUser.getRole() != User.UserRole.BUSINESS_COMMISSION) {
+            if (currentUser.getCompany() == null) {
+                return ResponseEntity.status(403).body(ResponseMessage.error(403, "企业用户必须关联企业"));
+            }
+            // 如果是更新操作，检查是否是自己企业的问卷
+            if (dto.getId() != null) {
+                SurveyQuestionnaireDTO existing = surveyService.findById(dto.getId())
+                        .orElse(null);
+                if (existing != null && !existing.getCompanyId().equals(currentUser.getCompany().getId())) {
+                    return ResponseEntity.status(403).body(ResponseMessage.error(403, "无权限修改其他企业的问卷"));
+                }
+            }
+            // 强制设置为当前用户的企业
+            dto.setCompanyId(currentUser.getCompany().getId());
         }
         
         try {
@@ -99,9 +133,17 @@ public class SurveyController {
             return ResponseEntity.status(401).body(ResponseMessage.error(401, "未授权"));
         }
         
-        // 只有管理员可以删除
-        if (currentUser.getRole() != User.UserRole.ADMIN) {
-            return ResponseEntity.status(403).body(ResponseMessage.error(403, "无权限删除"));
+        // 权限检查：管理员和商务委可以删除任何问卷，企业用户只能删除自己企业的问卷
+        if (currentUser.getRole() != User.UserRole.ADMIN 
+                && currentUser.getRole() != User.UserRole.BUSINESS_COMMISSION) {
+            SurveyQuestionnaireDTO survey = surveyService.findById(id).orElse(null);
+            if (survey == null) {
+                return ResponseEntity.status(404).body(ResponseMessage.error(404, "问卷调查记录不存在"));
+            }
+            if (currentUser.getCompany() == null 
+                    || !survey.getCompanyId().equals(currentUser.getCompany().getId())) {
+                return ResponseEntity.status(403).body(ResponseMessage.error(403, "无权限删除其他企业的问卷"));
+            }
         }
         
         try {
@@ -109,6 +151,8 @@ public class SurveyController {
             return ResponseEntity.ok(ResponseMessage.success(null));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body(ResponseMessage.error(400, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ResponseMessage.error(500, "删除失败: " + e.getMessage()));
         }
     }
 

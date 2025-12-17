@@ -118,8 +118,17 @@ public class UserService {
         }
 
         // 更新密码（如果提供，使用 BCrypt）
+        // 注意：如果密码已经是 BCrypt 格式（以 $2a$, $2b$, $2y$ 开头），则不再加密
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
-            user.setPassword(encodePassword(userDetails.getPassword()));
+            String password = userDetails.getPassword();
+            // 检查是否已经是 BCrypt 格式
+            if (password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$")) {
+                // 已经是加密过的密码，直接使用
+                user.setPassword(password);
+            } else {
+                // 明文密码，需要加密
+                user.setPassword(encodePassword(password));
+            }
         }
 
         // 更新角色（真正的权限控制在 Controller 中校验这里不判断操作者，仅保证数据合理）

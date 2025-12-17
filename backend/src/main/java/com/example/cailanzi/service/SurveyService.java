@@ -139,6 +139,18 @@ public class SurveyService {
         if (!surveyRepository.existsById(id)) {
             throw new IllegalArgumentException("问卷调查记录不存在，ID: " + id);
         }
+        
+        // 先删除关联数据
+        try {
+            deliveryCustomerRepository.deleteBySurveyId(id);
+            standardEquipmentRepository.deleteBySurveyId(id);
+            gpsPlatformRepository.deleteBySurveyId(id);
+            operationalProblemRepository.deleteBySurveyId(id);
+        } catch (Exception e) {
+            log.warn("删除问卷关联数据时出错，继续删除问卷: {}", e.getMessage());
+        }
+        
+        // 最后删除问卷本身
         surveyRepository.deleteById(id);
     }
 

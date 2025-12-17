@@ -19,4 +19,6 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
 
     @Query("SELECT c FROM Company c WHERE c.name LIKE %:keyword% OR c.businessScope LIKE %:keyword%")
     List<Company> searchByKeyword(String keyword);
+
+    List<Company> findByStatus(Company.CompanyStatus status);
 }

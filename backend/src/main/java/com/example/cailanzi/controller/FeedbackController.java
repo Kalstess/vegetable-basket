@@ -34,9 +34,15 @@ public class FeedbackController {
         
         List<FeedbackDTO> feedback;
         
-        if (currentUser.getRole() == User.UserRole.ADMIN) {
+        if (currentUser.getRole() == User.UserRole.ADMIN 
+                || currentUser.getRole() == User.UserRole.BUSINESS_COMMISSION) {
+            // 管理员和商务委可以查看所有反馈
             feedback = feedbackService.findAll();
-        } else if (currentUser.getRole() == User.UserRole.COMPANY && currentUser.getCompany() != null) {
+        } else if ((currentUser.getRole() == User.UserRole.COMPANY 
+                || currentUser.getRole() == User.UserRole.COMPANY_ADMIN
+                || currentUser.getRole() == User.UserRole.COMPANY_USER) 
+                && currentUser.getCompany() != null) {
+            // 企业用户查看自己企业的反馈
             feedback = feedbackService.findByCompanyId(currentUser.getCompany().getId());
         } else if (currentUser.getRole() == User.UserRole.DRIVER 
                 && currentUser.getVehicle() != null 

@@ -29,17 +29,33 @@ public class UserController {
     private final AuditLogService auditLogService;
 
     @GetMapping
-    @Operation(summary = "获取所有用户列表（仅管理员）")
+    @Operation(summary = "获取用户列表（管理员查看所有，企业管理员查看本企业用户）")
     public ResponseEntity<ResponseMessage<List<User>>> getAllUsers(HttpServletRequest request) {
-        // 验证管理员权限
         String username = getUsernameFromRequest(request);
         User currentUser = userService.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
-        if (currentUser.getRole() != User.UserRole.ADMIN) {
+        
+        List<User> users;
+        
+        if (currentUser.getRole() == User.UserRole.ADMIN) {
+            // 管理员查看所有用户
+            users = userService.findAll();
+        } else if (currentUser.getRole() == User.UserRole.COMPANY 
+                || currentUser.getRole() == User.UserRole.COMPANY_ADMIN) {
+            // 企业管理员可以查看本企业的所有用户（包括自己、COMPANY_USER 和 DRIVER）
+            if (currentUser.getCompany() == null || currentUser.getCompany().getId() == null) {
+                throw new IllegalArgumentException("当前用户未关联企业");
+            }
+            Long companyId = currentUser.getCompany().getId();
+            users = userService.findByCompanyId(companyId).stream()
+                    .filter(user -> user.getRole() == User.UserRole.COMPANY_ADMIN
+                            || user.getRole() == User.UserRole.COMPANY_USER 
+                            || user.getRole() == User.UserRole.DRIVER)
+                    .collect(java.util.stream.Collectors.toList());
+        } else {
             throw new IllegalArgumentException("无权限访问");
         }
-
-        List<User> users = userService.findAll();
+        
         return ResponseEntity.ok(ResponseMessage.success(users));
     }
 
@@ -156,13 +172,33 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除用户（仅管理员）")
+    @Operation(summary = "删除用户（管理员可删除所有，企业管理员只能删除本企业用户）")
     public ResponseEntity<ResponseMessage<Void>> deleteUser(@PathVariable Long id, HttpServletRequest request) {
-        // 验证管理员权限
         String username = getUsernameFromRequest(request);
         User currentUser = userService.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
-        if (currentUser.getRole() != User.UserRole.ADMIN) {
+        
+        // 权限规则：
+        // - ADMIN：可以删除任意用户（但不能删除自己）；
+        // - COMPANY / COMPANY_ADMIN：只能删除本企业下的 COMPANY_USER / DRIVER；
+        // 其他角色无删除权限。
+        if (currentUser.getRole() == User.UserRole.ADMIN) {
+            // 管理员不能删除自己
+            if (currentUser.getId().equals(id)) {
+                throw new IllegalArgumentException("不能删除自己的账号");
+            }
+        } else if (currentUser.getRole() == User.UserRole.COMPANY
+                || currentUser.getRole() == User.UserRole.COMPANY_ADMIN) {
+            User target = userService.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+            if (target.getCompany() == null || currentUser.getCompany() == null
+                    || !target.getCompany().getId().equals(currentUser.getCompany().getId())) {
+                throw new IllegalArgumentException("只能删除本企业用户");
+            }
+            if (target.getRole() != User.UserRole.COMPANY_USER && target.getRole() != User.UserRole.DRIVER) {
+                throw new IllegalArgumentException("只能删除本企业普通用户或司机用户");
+            }
+        } else {
             throw new IllegalArgumentException("无权限访问");
         }
 

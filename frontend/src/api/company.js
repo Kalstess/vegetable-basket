@@ -4,9 +4,10 @@ import request from './request'
  * 企业管理API
  */
 export const companyApi = {
-  // 获取所有企业列表
-  getAll() {
-    return request.get('/companies')
+  // 获取所有企业列表（支持按状态筛选）
+  getAll(status) {
+    const params = status ? { status } : {}
+    return request.get('/companies', { params })
   },
 
   // 根据ID获取企业详情

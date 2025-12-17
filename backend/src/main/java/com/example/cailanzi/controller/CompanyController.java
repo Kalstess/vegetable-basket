@@ -24,8 +24,10 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @GetMapping
-    @Operation(summary = "获取企业列表（管理员查看所有，企业用户只能查看自己的）")
-    public ResponseEntity<ResponseMessage<List<Company>>> getAllCompanies(HttpServletRequest request) {
+    @Operation(summary = "获取企业列表（管理员和商务委查看所有，企业用户只能查看自己的）")
+    public ResponseEntity<ResponseMessage<List<Company>>> getAllCompanies(
+            @RequestParam(required = false) String status,
+            HttpServletRequest request) {
         User currentUser = UserContext.getCurrentUser(request);
         if (currentUser == null) {
             return ResponseEntity.status(401).body(ResponseMessage.error(401, "未授权"));
@@ -33,10 +35,28 @@ public class CompanyController {
         
         List<Company> companies;
         
-        if (currentUser.getRole() == User.UserRole.ADMIN) {
-            companies = companyService.findAll();
-        } else if (currentUser.getRole() == User.UserRole.COMPANY && currentUser.getCompany() != null) {
-            companies = List.of(currentUser.getCompany());
+        if (currentUser.getRole() == User.UserRole.ADMIN 
+                || currentUser.getRole() == User.UserRole.BUSINESS_COMMISSION) {
+            // 管理员和商务委可以查看所有企业，支持按状态筛选
+            if (status != null && !status.isEmpty()) {
+                try {
+                    Company.CompanyStatus companyStatus = Company.CompanyStatus.valueOf(status);
+                    companies = companyService.findByStatus(companyStatus);
+                } catch (IllegalArgumentException e) {
+                    companies = companyService.findAll();
+                }
+            } else {
+                companies = companyService.findAll();
+            }
+        } else if (currentUser.getRole() == User.UserRole.COMPANY 
+                || currentUser.getRole() == User.UserRole.COMPANY_ADMIN
+                || currentUser.getRole() == User.UserRole.COMPANY_USER) {
+            // 企业用户只能查看自己的企业
+            if (currentUser.getCompany() != null) {
+                companies = List.of(currentUser.getCompany());
+            } else {
+                companies = List.of();
+            }
         } else {
             companies = List.of();
         }

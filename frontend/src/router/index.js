@@ -17,7 +17,7 @@ const routes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: '/companies', // 默认重定向，路由守卫会根据角色再次调整
     meta: { requiresAuth: true },
     children: [
       {
@@ -105,6 +105,12 @@ const routes = [
         meta: { title: '用户管理', icon: 'User', requiresAuth: true, roles: ['ADMIN'] }
       },
       {
+        path: 'company-users',
+        name: 'CompanyUsers',
+        component: () => import('@/views/user/CompanyUserList.vue'),
+        meta: { title: '企业内部用户', icon: 'UserFilled', requiresAuth: true, roles: ['COMPANY', 'COMPANY_ADMIN'] }
+      },
+      {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/user/Profile.vue'),
@@ -119,11 +125,39 @@ const router = createRouter({
   routes
 })
 
+// 根据角色获取默认首页路径
+const getDefaultPath = (role) => {
+  if (role === 'ADMIN' || role === 'BUSINESS_COMMISSION') {
+    return '/dashboard'
+  } else if (role === 'COMPANY' || role === 'COMPANY_ADMIN' || role === 'COMPANY_USER') {
+    return '/companies'
+  } else if (role === 'DRIVER') {
+    return '/vehicles'
+  }
+  return '/companies' // 默认
+}
+
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const requiresAuth = to.meta.requiresAuth !== false
   const role = localStorage.getItem('role')
+
+  // 公开页面（登录页、注册页）不需要认证
+  if (to.path === '/login' || to.path === '/company-register') {
+    if (token) {
+      // 已登录访问登录/注册页，跳转到首页
+      const defaultPath = getDefaultPath(role)
+      if (to.path === defaultPath) {
+        next()
+      } else {
+        next(defaultPath)
+      }
+    } else {
+      next()
+    }
+    return
+  }
 
   // 个人中心页面：所有已登录用户都可以访问
   if (to.path === '/profile') {
@@ -135,44 +169,37 @@ router.beforeEach((to, from, next) => {
     return
   }
 
+  // 需要登录但未登录
   if (requiresAuth && !token) {
-    // 需要登录但未登录，跳转到登录页
     next({ name: 'Login', query: { redirect: to.fullPath } })
-  } else if (to.path === '/login' && token) {
-    // 已登录访问登录页，跳转到首页
-    // 根据角色跳转到不同首页
-    if (role === 'ADMIN') {
-      next('/dashboard')
-    } else if (role === 'BUSINESS_COMMISSION') {
-      next('/dashboard')
-    } else if (role === 'COMPANY' || role === 'COMPANY_ADMIN' || role === 'COMPANY_USER') {
-      next('/companies')
-    } else if (role === 'DRIVER') {
-      next('/vehicles')
-    } else {
-      next('/companies')
-    }
-  } else if (requiresAuth && to.meta.roles) {
+    return
+  }
+
+  // 处理根路径重定向
+  if (to.path === '/') {
+    const defaultPath = getDefaultPath(role)
+    next(defaultPath)
+    return
+  }
+
+  // 已登录用户访问需要权限的页面
+  if (requiresAuth && to.meta.roles) {
     // 检查角色权限
     if (!role || !to.meta.roles.includes(role)) {
-      // 无权限，跳转到有权限的首页
-      if (role === 'ADMIN') {
-        next('/dashboard')
-      } else if (role === 'BUSINESS_COMMISSION') {
-        next('/dashboard')
-      } else if (role === 'COMPANY' || role === 'COMPANY_ADMIN' || role === 'COMPANY_USER') {
-        next('/companies')
-      } else if (role === 'DRIVER') {
-        next('/vehicles')
+      // 无权限，跳转到有权限的首页（避免循环重定向）
+      const defaultPath = getDefaultPath(role)
+      // 如果目标路径就是默认路径，说明已经在正确的页面，直接放行
+      if (to.path === defaultPath || to.path === '/') {
+        next()
       } else {
-        next('/companies')
+        next(defaultPath)
       }
-    } else {
-      next()
+      return
     }
-  } else {
-    next()
   }
+
+  // 其他情况正常放行
+  next()
 })
 
 export default router

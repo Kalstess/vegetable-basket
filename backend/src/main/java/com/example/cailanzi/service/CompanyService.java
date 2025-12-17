@@ -71,4 +71,8 @@ public class CompanyService {
     public List<Company> searchByKeyword(String keyword) {
         return companyRepository.searchByKeyword(keyword);
     }
+
+    public List<Company> findByStatus(Company.CompanyStatus status) {
+        return companyRepository.findByStatus(status);
+    }
 }
