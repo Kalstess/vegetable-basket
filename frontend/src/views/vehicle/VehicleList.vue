@@ -4,10 +4,24 @@
       <template #header>
         <div class="card-header">
           <span>车辆管理</span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增车辆
-          </el-button>
+          <div>
+            <el-button @click="handleExportTemplate">
+              <el-icon><Download /></el-icon>
+              下载模板
+            </el-button>
+            <el-button @click="handleImport">
+              <el-icon><Upload /></el-icon>
+              导入Excel
+            </el-button>
+            <el-button @click="handleExport">
+              <el-icon><Download /></el-icon>
+              导出Excel
+            </el-button>
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>
+              新增车辆
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -23,6 +37,15 @@
         </el-select>
         <el-button type="primary" @click="loadData">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
+        <el-alert
+          type="info"
+          :closable="false"
+          style="margin-left: 20px; flex: 1;"
+        >
+          <template #title>
+            <span style="font-size: 12px;">提示：支持Excel批量导入，请先下载模板，填写后上传。购置时间格式：YYYY-MM-DD（如：2020-01-01）</span>
+          </template>
+        </el-alert>
       </div>
 
       <!-- 数据表 -->
@@ -138,8 +161,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Download, Upload } from '@element-plus/icons-vue'
 import { vehicleApi, companyApi } from '@/api'
+import { exportToExcel, importFromExcel, createExcelTemplate } from '@/utils/excel'
+import dayjs from 'dayjs'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -256,6 +281,187 @@ const handleDelete = async (row) => {
   } catch (error) {
     if (error !== 'cancel') ElMessage.error('删除失败')
   }
+}
+
+// Excel导入导出功能
+const handleExportTemplate = () => {
+  const columns = [
+    { key: 'companyName', label: '所属企业', required: true, example: '示例企业名称' },
+    { key: 'plateNumber', label: '车牌号', required: true, example: '京A12345' },
+    { key: 'vehicleCategory', label: '车辆类别', required: true, example: '菜篮子工程车' },
+    { key: 'vehicleType', label: '车辆类型', required: true, example: '普通' },
+    { key: 'colorPlate', label: '车牌颜色', required: true, example: '蓝牌' },
+    { key: 'emissionStandard', label: '排放标准', required: false, example: '国五' },
+    { key: 'approvedLoad', label: '核定载质量(吨)', required: false, example: '5.00' },
+    { key: 'purchaseDate', label: '购置时间', required: false, example: '2020-01-01' },
+    { key: 'vin', label: '车架号(VIN)', required: false, example: 'LSGXXXXXXXXXXXXX' },
+    { key: 'engineNo', label: '发动机号', required: false, example: 'XXXXXXXX' }
+  ]
+  createExcelTemplate(columns, '车辆管理模板.xlsx')
+  ElMessage.success('模板下载成功')
+}
+
+const handleImport = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.xlsx,.xls'
+  input.onchange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    try {
+      ElMessage.info('正在解析Excel文件...')
+      const excelData = await importFromExcel(file)
+      
+      if (excelData.length === 0) {
+        ElMessage.warning('Excel文件中没有数据')
+        return
+      }
+      
+      // 验证和转换数据
+      const errors = []
+      const successData = []
+      
+      for (let i = 0; i < excelData.length; i++) {
+        const row = excelData[i]
+        const rowNum = i + 3 // Excel行号（从3开始，因为第1行是表头，第2行是必填/可选标记）
+        const errorsInRow = []
+        
+        // 验证必填项
+        if (!row['所属企业']) errorsInRow.push('所属企业不能为空')
+        if (!row['车牌号']) errorsInRow.push('车牌号不能为空')
+        if (!row['车辆类别']) errorsInRow.push('车辆类别不能为空')
+        if (!row['车辆类型']) errorsInRow.push('车辆类型不能为空')
+        if (!row['车牌颜色']) errorsInRow.push('车牌颜色不能为空')
+        
+        if (errorsInRow.length > 0) {
+          errors.push(`第${rowNum}行: ${errorsInRow.join('; ')}`)
+          continue
+        }
+        
+        // 查找企业ID
+        const company = companies.value.find(c => c.name === row['所属企业'])
+        if (!company) {
+          errors.push(`第${rowNum}行: 找不到企业"${row['所属企业']}"`)
+          continue
+        }
+        
+        // 处理日期格式
+        let purchaseDate = null
+        if (row['购置时间']) {
+          // 支持多种日期格式
+          const dateStr = String(row['购置时间']).trim()
+          if (dateStr) {
+            // 尝试解析日期
+            let date = null
+            // Excel日期可能是数字（从1900-01-01开始的天数）
+            if (typeof row['购置时间'] === 'number') {
+              // Excel日期序列号转换
+              const excelEpoch = new Date(1899, 11, 30)
+              date = new Date(excelEpoch.getTime() + row['购置时间'] * 24 * 60 * 60 * 1000)
+            } else {
+              // 尝试解析字符串日期
+              date = dayjs(dateStr).isValid() ? dayjs(dateStr).toDate() : null
+            }
+            if (date && !isNaN(date.getTime())) {
+              purchaseDate = dayjs(date).format('YYYY-MM-DD')
+            } else {
+              errors.push(`第${rowNum}行: 购置时间格式错误，请使用YYYY-MM-DD格式`)
+              continue
+            }
+          }
+        }
+        
+        // 验证枚举值
+        const validCategories = ['菜篮子工程车', '非菜篮子工程车']
+        if (!validCategories.includes(row['车辆类别'])) {
+          errors.push(`第${rowNum}行: 车辆类别必须是"菜篮子工程车"或"非菜篮子工程车"`)
+          continue
+        }
+        
+        const validTypes = ['普通', '冷藏']
+        if (!validTypes.includes(row['车辆类型'])) {
+          errors.push(`第${rowNum}行: 车辆类型必须是"普通"或"冷藏"`)
+          continue
+        }
+        
+        const validColors = ['蓝牌', '黄牌', '绿牌']
+        if (!validColors.includes(row['车牌颜色'])) {
+          errors.push(`第${rowNum}行: 车牌颜色必须是"蓝牌"、"黄牌"或"绿牌"`)
+          continue
+        }
+        
+        // 构建数据对象
+        const vehicleData = {
+          companyId: company.id,
+          plateNumber: String(row['车牌号']).trim(),
+          vehicleCategory: row['车辆类别'],
+          vehicleType: row['车辆类型'],
+          colorPlate: row['车牌颜色'],
+          emissionStandard: row['排放标准'] ? String(row['排放标准']).trim() : '',
+          approvedLoad: row['核定载质量(吨)'] ? parseFloat(row['核定载质量(吨)']) : 0,
+          purchaseDate: purchaseDate,
+          vin: row['车架号(VIN)'] ? String(row['车架号(VIN)']).trim() : '',
+          engineNo: row['发动机号'] ? String(row['发动机号']).trim() : ''
+        }
+        
+        successData.push(vehicleData)
+      }
+      
+      // 显示错误信息
+      if (errors.length > 0) {
+        ElMessage.warning(`导入完成，但有${errors.length}条错误：\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`)
+      }
+      
+      // 批量导入数据
+      if (successData.length > 0) {
+        ElMessage.info(`正在导入${successData.length}条数据...`)
+        let successCount = 0
+        let failCount = 0
+        
+        for (const data of successData) {
+          try {
+            await vehicleApi.create(data)
+            successCount++
+          } catch (error) {
+            failCount++
+            console.error('导入失败:', data, error)
+          }
+        }
+        
+        ElMessage.success(`导入完成：成功${successCount}条，失败${failCount}条`)
+        loadData()
+      }
+    } catch (error) {
+      ElMessage.error('导入失败: ' + error.message)
+    }
+  }
+  input.click()
+}
+
+const handleExport = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('没有数据可导出')
+    return
+  }
+  
+  const columns = [
+    { key: 'companyName', label: '所属企业', formatter: (val) => val || '' },
+    { key: 'plateNumber', label: '车牌号', formatter: (val) => val || '' },
+    { key: 'vehicleCategory', label: '车辆类别', formatter: (val) => val || '' },
+    { key: 'vehicleType', label: '车辆类型', formatter: (val) => val || '' },
+    { key: 'colorPlate', label: '车牌颜色', formatter: (val) => val || '' },
+    { key: 'emissionStandard', label: '排放标准', formatter: (val) => val || '' },
+    { key: 'approvedLoad', label: '核定载质量(吨)', formatter: (val) => val ?? '' },
+    { key: 'purchaseDate', label: '购置时间', formatter: (val) => val ? dayjs(val).format('YYYY-MM-DD') : '' },
+    { key: 'vin', label: '车架号(VIN)', formatter: (val) => val || '' },
+    { key: 'engineNo', label: '发动机号', formatter: (val) => val || '' },
+    { key: 'isActive', label: '状态', formatter: (val) => val ? '有效' : '无效' }
+  ]
+  
+  const filename = `车辆管理_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`
+  exportToExcel(tableData.value, columns, filename)
+  ElMessage.success('导出成功')
 }
 </script>
 

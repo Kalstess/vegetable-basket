@@ -3,8 +3,7 @@
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="aside">
       <div class="logo">
-        <span v-if="!isCollapse">菜篮子工程车填报和展示系统</span>
-        <span v-else>菜篮子</span>
+        <span>菜篮子</span>
       </div>
       <el-menu
         :default-active="activeMenu"

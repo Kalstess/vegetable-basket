@@ -4,10 +4,24 @@
       <template #header>
         <div class="card-header">
           <span>运输统计</span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增运输统计
-          </el-button>
+          <div>
+            <el-button @click="handleExportTemplate">
+              <el-icon><Download /></el-icon>
+              下载模板
+            </el-button>
+            <el-button @click="handleImport">
+              <el-icon><Upload /></el-icon>
+              导入Excel
+            </el-button>
+            <el-button @click="handleExport">
+              <el-icon><Download /></el-icon>
+              导出Excel
+            </el-button>
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>
+              新增运输统计
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -30,6 +44,15 @@
         </el-select>
         <el-button type="primary" @click="loadData">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
+        <el-alert
+          type="info"
+          :closable="false"
+          style="margin-left: 20px; flex: 1;"
+        >
+          <template #title>
+            <span style="font-size: 12px;">提示：支持Excel批量导入，请先下载模板。产品类型用逗号分隔（如：蔬菜,肉类,水果）</span>
+          </template>
+        </el-alert>
       </div>
 
       <el-table
@@ -201,8 +224,10 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Download, Upload } from '@element-plus/icons-vue'
 import { transportApi, companyApi, vehicleApi, productTypeApi } from '@/api'
+import { exportToExcel, importFromExcel, createExcelTemplate } from '@/utils/excel'
+import dayjs from 'dayjs'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -432,6 +457,164 @@ const handleDelete = async (row) => {
       ElMessage.error('删除失败')
     }
   }
+}
+
+// Excel导入导出功能
+const handleExportTemplate = () => {
+  const columns = [
+    { key: 'plateNumber', label: '车牌号', required: true, example: '京A12345' },
+    { key: 'statYear', label: '统计年份', required: true, example: '2025' },
+    { key: 'statMonth', label: '统计月份', required: true, example: '1' },
+    { key: 'dailyDeliveryTimes', label: '日均配送次数', required: false, example: '5.50' },
+    { key: 'dailyDeliveryPoints', label: '日配送网点数', required: false, example: '10' },
+    { key: 'peakSeasonDailyIncreaseTimes', label: '旺季增加次数', required: false, example: '2' },
+    { key: 'monthProductTon', label: '月产品吨数', required: false, example: '100.50' },
+    { key: 'monthKilometers', label: '月公里数', required: false, example: '5000.00' },
+    { key: 'monthDeliveryCost', label: '月配送费用', required: false, example: '50000.00' },
+    { key: 'productTypes', label: '产品类型', required: false, example: '蔬菜,肉类,水果' }
+  ]
+  createExcelTemplate(columns, '运输统计模板.xlsx')
+  ElMessage.success('模板下载成功')
+}
+
+const handleImport = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.xlsx,.xls'
+  input.onchange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    try {
+      ElMessage.info('正在解析Excel文件...')
+      const excelData = await importFromExcel(file)
+      
+      if (excelData.length === 0) {
+        ElMessage.warning('Excel文件中没有数据')
+        return
+      }
+      
+      // 验证和转换数据
+      const errors = []
+      const successData = []
+      
+      for (let i = 0; i < excelData.length; i++) {
+        const row = excelData[i]
+        const rowNum = i + 3 // Excel行号（从3开始，因为第1行是表头，第2行是必填/可选标记）
+        const errorsInRow = []
+        
+        // 验证必填项
+        if (!row['车牌号']) errorsInRow.push('车牌号不能为空')
+        if (!row['统计年份']) errorsInRow.push('统计年份不能为空')
+        if (!row['统计月份']) errorsInRow.push('统计月份不能为空')
+        
+        if (errorsInRow.length > 0) {
+          errors.push(`第${rowNum}行: ${errorsInRow.join('; ')}`)
+          continue
+        }
+        
+        // 查找车辆ID
+        const vehicle = allVehicles.value.find(v => v.plateNumber === String(row['车牌号']).trim())
+        if (!vehicle) {
+          errors.push(`第${rowNum}行: 找不到车牌号"${row['车牌号']}"`)
+          continue
+        }
+        
+        // 验证年份和月份
+        const statYear = parseInt(row['统计年份'])
+        const statMonth = parseInt(row['统计月份'])
+        
+        if (isNaN(statYear) || statYear < 2020 || statYear > 2099) {
+          errors.push(`第${rowNum}行: 统计年份格式错误，应为2020-2099之间的数字`)
+          continue
+        }
+        
+        if (isNaN(statMonth) || statMonth < 1 || statMonth > 12) {
+          errors.push(`第${rowNum}行: 统计月份格式错误，应为1-12之间的数字`)
+          continue
+        }
+        
+        // 处理产品类型（可能是逗号分隔的字符串）
+        let productTypesArray = []
+        if (row['产品类型']) {
+          const productTypesStr = String(row['产品类型']).trim()
+          if (productTypesStr) {
+            // 支持逗号、分号、空格分隔
+            productTypesArray = productTypesStr.split(/[,，;；\s]+/).filter(t => t.trim())
+          }
+        }
+        
+        // 构建数据对象
+        const transportData = {
+          vehicleId: vehicle.id,
+          statYear: statYear,
+          statMonth: statMonth,
+          dailyDeliveryTimes: row['日均配送次数'] ? parseFloat(row['日均配送次数']) : 0,
+          dailyDeliveryPoints: row['日配送网点数'] ? parseInt(row['日配送网点数']) : null,
+          peakSeasonDailyIncreaseTimes: row['旺季增加次数'] ? parseInt(row['旺季增加次数']) : null,
+          monthProductTon: row['月产品吨数'] ? parseFloat(row['月产品吨数']) : 0,
+          monthKilometers: row['月公里数'] ? parseFloat(row['月公里数']) : 0,
+          monthDeliveryCost: row['月配送费用'] ? parseFloat(row['月配送费用']) : null,
+          productTypes: productTypesArray.length > 0 ? productTypesArray : []
+        }
+        
+        successData.push(transportData)
+      }
+      
+      // 显示错误信息
+      if (errors.length > 0) {
+        ElMessage.warning(`导入完成，但有${errors.length}条错误：\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`)
+      }
+      
+      // 批量导入数据
+      if (successData.length > 0) {
+        ElMessage.info(`正在导入${successData.length}条数据...`)
+        let successCount = 0
+        let failCount = 0
+        
+        for (const data of successData) {
+          try {
+            await transportApi.create(data)
+            successCount++
+          } catch (error) {
+            failCount++
+            console.error('导入失败:', data, error)
+          }
+        }
+        
+        ElMessage.success(`导入完成：成功${successCount}条，失败${failCount}条`)
+        loadData()
+      }
+    } catch (error) {
+      ElMessage.error('导入失败: ' + error.message)
+    }
+  }
+  input.click()
+}
+
+const handleExport = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('没有数据可导出')
+    return
+  }
+  
+  const columns = [
+    { key: 'plateNumber', label: '车牌号', formatter: (val) => val || '' },
+    { key: 'companyName', label: '所属企业', formatter: (val) => val || '' },
+    { key: 'statYear', label: '统计年份', formatter: (val) => val ?? '' },
+    { key: 'statMonth', label: '统计月份', formatter: (val) => val ?? '' },
+    { key: 'dailyDeliveryTimes', label: '日均配送次数', formatter: (val) => val ?? 0 },
+    { key: 'dailyDeliveryPoints', label: '日配送网点数', formatter: (val) => val ?? '' },
+    { key: 'peakSeasonDailyIncreaseTimes', label: '旺季增加次数', formatter: (val) => val ?? '' },
+    { key: 'monthProductTon', label: '月产品吨数', formatter: (val) => val ?? 0 },
+    { key: 'monthKilometers', label: '月公里数', formatter: (val) => val ?? 0 },
+    { key: 'monthDeliveryCost', label: '月配送费用', formatter: (val) => val ?? '' },
+    { key: 'productTypes', label: '产品类型', formatter: (val) => Array.isArray(val) ? val.join(',') : '' }
+  ]
+  
+  const filename = `运输统计_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`
+  exportToExcel(tableData.value, columns, filename)
+  ElMessage.success('导出成功')
 }
 </script>
 

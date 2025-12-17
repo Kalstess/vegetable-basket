@@ -4,7 +4,7 @@
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
-          <h2>菜篮子工程车填报和展示系统</h2>
+          <h2>菜篮子</h2>
         </div>
       </template>
       <el-form
@@ -44,7 +44,6 @@
         </el-form-item>
       </el-form>
       <div class="login-tip">
-        <p>默认账号：admin / 123123</p>
         <p class="register-link">
           尚未入驻？<a href="javascript:;" @click.prevent="goToRegister">企业自助注册</a>
         </p>

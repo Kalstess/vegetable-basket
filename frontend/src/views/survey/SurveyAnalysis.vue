@@ -272,8 +272,27 @@
           <template #header>
             <div class="chart-header">
               <span>2025年营业收入分布</span>
-              <div>
-                <el-checkbox v-model="excludeOutliers.revenue" @change="updateAllCharts(tableData)">排除极端值</el-checkbox>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <el-checkbox v-model="revenueRange.enabled" @change="updateAllCharts(tableData)">区间过滤</el-checkbox>
+                <el-input-number 
+                  v-model="revenueRange.min" 
+                  :min="0" 
+                  :precision="0"
+                  :disabled="!revenueRange.enabled"
+                  placeholder="最小值"
+                  style="width: 120px;"
+                  @change="updateAllCharts(tableData)"
+                />
+                <span v-if="revenueRange.enabled">至</span>
+                <el-input-number 
+                  v-model="revenueRange.max" 
+                  :min="0" 
+                  :precision="0"
+                  :disabled="!revenueRange.enabled"
+                  placeholder="最大值"
+                  style="width: 120px;"
+                  @change="updateAllCharts(tableData)"
+                />
                 <el-button text @click="editChartConfig('revenue')">配置</el-button>
               </div>
             </div>
@@ -453,9 +472,11 @@ const showConfigDialog = ref(false)
 const showSingleConfigDialog = ref(false)
 const currentChartConfig = ref({})
 
-// 排除极端值配置（仅用于营业收入分布）
-const excludeOutliers = ref({
-  revenue: false
+// 营业收入区间过滤配置
+const revenueRange = ref({
+  enabled: false,
+  min: null,
+  max: null
 })
 
 // 图表配置列表（用于checkbox-group）
@@ -1162,9 +1183,11 @@ const updateRevenueChart = (data) => {
   let revenues = data.filter(item => item.revenue2025).map(item => item.revenue2025)
   if (revenues.length === 0) return
   
-  // 如果启用排除极端值，使用IQR方法过滤
-  if (excludeOutliers.value.revenue) {
-    revenues = removeOutliers(revenues)
+  // 如果启用区间过滤，使用配置的最小值和最大值过滤
+  if (revenueRange.value.enabled) {
+    const min = revenueRange.value.min !== null ? revenueRange.value.min : -Infinity
+    const max = revenueRange.value.max !== null ? revenueRange.value.max : Infinity
+    revenues = revenues.filter(v => v >= min && v <= max)
   }
   
   if (revenues.length === 0) return

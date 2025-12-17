@@ -86,29 +86,21 @@
       <el-col :span="12">
         <el-card>
           <template #header>
-            <span>车辆效率散点图（X=年里程, Y=年运输量, 气泡=成本）</span>
-          </template>
-          <div ref="vehicleScatterRef" style="height: 360px"></div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 装载率散点图 & 产品类型热力图 -->
-    <el-row :gutter="20" style="margin-top: 20px">
-      <el-col :span="12">
-        <el-card>
-          <template #header>
             <span>装载率与运输量关系散点图</span>
           </template>
           <div ref="loadingScatterRef" style="height: 360px"></div>
         </el-card>
       </el-col>
-      <el-col :span="12">
+    </el-row>
+
+    <!-- 车辆效率散点图 -->
+    <el-row :gutter="20" style="margin-top: 20px">
+      <el-col :span="24">
         <el-card>
           <template #header>
-            <span>产品类型月度热力图</span>
+            <span>车辆效率散点图（X=年里程, Y=年运输量, 气泡=成本）</span>
           </template>
-          <div ref="productHeatmapRef" style="height: 360px"></div>
+          <div ref="vehicleScatterRef" style="height: 360px"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -126,8 +118,8 @@
                   multiple
                   clearable
                   collapse-tags
-                  placeholder="选择车辆（不选则展示前5名）"
-                  style="min-width: 260px"
+                  placeholder="选择车辆（不选则展示年运输量前5名）"
+                  style="min-width: 280px"
                   @change="updateMonthlyTrendChart"
                 >
                   <el-option
@@ -178,7 +170,6 @@ const yoyBarRef = ref(null)
 const vehicleRankRef = ref(null)
 const vehicleScatterRef = ref(null)
 const loadingScatterRef = ref(null)
-const productHeatmapRef = ref(null)
 const monthlyTrendRef = ref(null)
 
 let transportTrendChart = null
@@ -186,7 +177,6 @@ let yoyBarChart = null
 let vehicleRankChart = null
 let vehicleScatterChart = null
 let loadingScatterChart = null
-let productHeatmapChart = null
 let monthlyTrendChart = null
 
 // 下钻选中的车辆
@@ -252,7 +242,6 @@ const loadAll = async () => {
       updateVehicleRankChart()
       updateVehicleScatterChart()
       updateLoadingScatterChart()
-      updateProductHeatmapChart()
       updateMonthlyTrendChart()
     })
   } catch (e) {
@@ -277,9 +266,6 @@ const initCharts = () => {
 
   if (loadingScatterRef.value) {
     loadingScatterChart = echarts.init(loadingScatterRef.value)
-  }
-  if (productHeatmapRef.value) {
-    productHeatmapChart = echarts.init(productHeatmapRef.value)
   }
   if (monthlyTrendRef.value) {
     monthlyTrendChart = echarts.init(monthlyTrendRef.value)
@@ -527,106 +513,6 @@ const updateLoadingScatterChart = () => {
     ]
   }
   loadingScatterChart.setOption(option)
-}
-
-// 产品类型月度热力图（基于 transport_stats.productTypes 和 monthProductTon）
-const updateProductHeatmapChart = () => {
-  if (!productHeatmapChart) return
-  if (!transportMonthlyStats.value.length) {
-    productHeatmapChart.clear()
-    return
-  }
-
-  const year = filters.value.year
-  const list = year
-    ? transportMonthlyStats.value.filter(item => item.statYear === year)
-    : transportMonthlyStats.value
-
-  if (!list.length) {
-    productHeatmapChart.clear()
-    return
-  }
-
-  const productMonthMap = new Map() // key: `${type}#${month}`, value: ton
-  const productTotalMap = new Map()
-
-  list.forEach(item => {
-    const month = item.statMonth
-    const ton = Number(item.monthProductTon || 0)
-    const types = Array.isArray(item.productTypes) ? item.productTypes : []
-    types.forEach(t => {
-      const key = `${t}#${month}`
-      productMonthMap.set(key, (productMonthMap.get(key) || 0) + ton)
-      productTotalMap.set(t, (productTotalMap.get(t) || 0) + ton)
-    })
-  })
-
-  // 选取总量前 8 的产品类型
-  const sortedTypes = Array.from(productTotalMap.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
-    .map(([t]) => t)
-
-  if (!sortedTypes.length) {
-    productHeatmapChart.clear()
-    return
-  }
-
-  const months = Array.from({ length: 12 }, (_, i) => i + 1)
-  const data = []
-  sortedTypes.forEach((t, i) => {
-    months.forEach((m, j) => {
-      const key = `${t}#${m}`
-      const val = productMonthMap.get(key) || 0
-      data.push([j, i, Number(val.toFixed(2))])
-    })
-  })
-
-  const option = {
-    tooltip: {
-      position: 'top',
-      formatter: params => {
-        const m = months[params.data[0]]
-        const type = sortedTypes[params.data[1]]
-        const val = params.data[2]
-        return `${type}<br/>月份: ${m} 月<br/>运输量: ${val.toFixed(2)} 吨`
-      }
-    },
-    grid: {
-      left: '5%',
-      right: '10%',
-      top: '8%',
-      bottom: '12%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: months.map(m => `${m}月`)
-    },
-    yAxis: {
-      type: 'category',
-      data: sortedTypes
-    },
-    visualMap: {
-      min: 0,
-      max: Math.max(...data.map(d => d[2] || 0)) || 1,
-      calculable: true,
-      orient: 'horizontal',
-      left: 'center',
-      bottom: 0
-    },
-    series: [
-      {
-        name: '产品类型月度运输量',
-        type: 'heatmap',
-        data,
-        label: {
-          show: false
-        }
-      }
-    ]
-  }
-  productHeatmapChart.setOption(option)
 }
 
 // 车辆月度趋势多线图
