@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -171,7 +172,7 @@ public class SurveyController {
     }
 
     @GetMapping("/year/{year}")
-    @Operation(summary = "根据年份获取问卷调查列表")
+    @Operation(summary = "根据年份获取问卷调查列表（管理员查看所有，企业用户查看自己企业的）")
     public ResponseEntity<ResponseMessage<List<SurveyQuestionnaireDTO>>> getSurveysByYear(
             @PathVariable Integer year, HttpServletRequest request) {
         User currentUser = UserContext.getCurrentUser(request);
@@ -179,7 +180,25 @@ public class SurveyController {
             return ResponseEntity.status(401).body(ResponseMessage.error(401, "未授权"));
         }
         
-        List<SurveyQuestionnaireDTO> surveys = surveyService.findBySurveyYear(year);
+        List<SurveyQuestionnaireDTO> surveys;
+        
+        if (currentUser.getRole() == User.UserRole.ADMIN 
+                || currentUser.getRole() == User.UserRole.BUSINESS_COMMISSION) {
+            // 管理员和商务委可以查看所有问卷
+            surveys = surveyService.findBySurveyYear(year);
+        } else if ((currentUser.getRole() == User.UserRole.COMPANY 
+                || currentUser.getRole() == User.UserRole.COMPANY_ADMIN
+                || currentUser.getRole() == User.UserRole.COMPANY_USER) 
+                && currentUser.getCompany() != null) {
+            // 企业用户（包括企业管理员和普通用户）只能查看自己企业的问卷
+            List<SurveyQuestionnaireDTO> allSurveys = surveyService.findBySurveyYear(year);
+            surveys = allSurveys.stream()
+                    .filter(survey -> survey.getCompanyId().equals(currentUser.getCompany().getId()))
+                    .collect(Collectors.toList());
+        } else {
+            surveys = List.of();
+        }
+        
         return ResponseEntity.ok(ResponseMessage.success(surveys));
     }
 }

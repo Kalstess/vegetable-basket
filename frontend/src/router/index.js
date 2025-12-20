@@ -29,7 +29,13 @@ const routes = [
       {
         path: 'analytics',
         name: 'EnterpriseAnalytics',
-        component: () => import('@/views/analytics/EnterpriseTransportDashboard.vue'),
+        component: () => import('@/views/analytics/EnterpriseTransportDashboard.vue').catch(err => {
+          console.error('加载运营分析组件失败:', err)
+          // 返回一个错误提示组件
+          return {
+            template: '<div style="padding: 20px; text-align: center;"><h3>组件加载失败</h3><p>请检查控制台错误信息</p></div>'
+          }
+        }),
         meta: { title: '运营分析', icon: 'DataAnalysis', requiresAuth: true, roles: ['ADMIN', 'BUSINESS_COMMISSION', 'COMPANY', 'COMPANY_ADMIN', 'COMPANY_USER'] }
       },
       {
@@ -143,6 +149,9 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth !== false
   const role = localStorage.getItem('role')
 
+  // 添加调试日志
+  console.log('路由守卫:', { path: to.path, name: to.name, role, hasToken: !!token })
+
   // 公开页面（登录页、注册页）不需要认证
   if (to.path === '/login' || to.path === '/company-register') {
     if (token) {
@@ -171,6 +180,7 @@ router.beforeEach((to, from, next) => {
 
   // 需要登录但未登录
   if (requiresAuth && !token) {
+    console.warn('路由守卫: 未登录，跳转到登录页')
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
@@ -186,6 +196,7 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth && to.meta.roles) {
     // 检查角色权限
     if (!role || !to.meta.roles.includes(role)) {
+      console.warn('路由守卫: 权限不足', { role, requiredRoles: to.meta.roles, path: to.path })
       // 无权限，跳转到有权限的首页（避免循环重定向）
       const defaultPath = getDefaultPath(role)
       // 如果目标路径就是默认路径，说明已经在正确的页面，直接放行
@@ -199,7 +210,19 @@ router.beforeEach((to, from, next) => {
   }
 
   // 其他情况正常放行
+  console.log('路由守卫: 放行', to.path)
   next()
+})
+
+// 路由错误处理
+router.onError((error) => {
+  console.error('路由错误:', error)
+  const pattern = /Loading chunk (\d)+ failed/g
+  const isChunkLoadError = error.message && error.message.match(pattern)
+  if (isChunkLoadError) {
+    console.error('组件加载失败，可能是网络问题或构建问题')
+    // 可以在这里添加重试逻辑或错误提示
+  }
 })
 
 export default router

@@ -152,6 +152,14 @@ const filters = ref({
   year: 2025
 })
 
+// 获取当前用户角色和企业ID
+const currentRole = ref(localStorage.getItem('role') || '')
+const getCurrentCompanyId = () => {
+  const id = localStorage.getItem('companyId')
+  return id ? parseInt(id) : null
+}
+const currentCompanyId = ref(getCurrentCompanyId())
+
 const transportTrends = ref([]) // CompanyTransportTrendDTO 列表
 const vehicleYearStats = ref([]) // VehicleYearStatsDTO 列表
 
@@ -183,23 +191,54 @@ let monthlyTrendChart = null
 const selectedVehicleIds = ref([])
 
 onMounted(() => {
-  loadCompanies()
-  loadAll()
-  nextTick(() => {
-    initCharts()
-  })
+  console.log('运营分析页面已挂载')
+  try {
+    loadCompanies()
+    loadAll()
+    nextTick(() => {
+      initCharts()
+    })
+  } catch (error) {
+    console.error('运营分析页面初始化失败:', error)
+    ElMessage.error('页面初始化失败: ' + (error.message || '未知错误'))
+  }
 })
 
 const loadCompanies = async () => {
   try {
-    companies.value = await companyApi.getAll()
+    let allCompanies = await companyApi.getAll()
+    
+    // 企业用户（包括企业管理员和普通用户）只能看到自己企业
+    if (currentRole.value === 'COMPANY' || currentRole.value === 'COMPANY_ADMIN' || currentRole.value === 'COMPANY_USER') {
+      // 重新获取 companyId（可能登录后更新了）
+      const companyId = getCurrentCompanyId()
+      currentCompanyId.value = companyId
+      
+      if (companyId) {
+        // 确保企业列表包含当前用户的企业
+        allCompanies = Array.isArray(allCompanies) ? allCompanies : (allCompanies?.data || [])
+        allCompanies = allCompanies.filter(c => {
+          const cid = typeof c.id === 'string' ? parseInt(c.id) : c.id
+          return cid === companyId
+        })
+        // 自动设置筛选条件为企业自己的ID
+        filters.value.companyId = companyId
+        console.log('企业管理员 - 自动设置企业筛选:', companyId)
+      } else {
+        console.warn('企业管理员 - 未找到 companyId')
+        allCompanies = []
+      }
+    }
+    
+    companies.value = Array.isArray(allCompanies) ? allCompanies : (allCompanies?.data || [])
   } catch (e) {
-    console.error(e)
+    console.error('加载企业列表失败:', e)
   }
 }
 
 const loadAll = async () => {
   try {
+    console.log('开始加载运营分析数据', filters.value)
     const trendParams = {}
     if (filters.value.companyId) {
       trendParams.companyId = filters.value.companyId
@@ -216,12 +255,16 @@ const loadAll = async () => {
       surveyParams.year = filters.value.year
     }
 
+    console.log('API 请求参数:', { trendParams, yearParams, surveyParams })
+    
     const [trendResp, vehicleResp, surveyResp, transportResp] = await Promise.all([
       analyticsApi.getCompanyTransportTrends(trendParams),
       analyticsApi.getVehicleYearStats(yearParams),
       filters.value.year ? surveyApi.getByYear(filters.value.year) : surveyApi.getAll(),
       filters.value.companyId ? transportApi.getByCompanyId(filters.value.companyId) : transportApi.getAll()
     ])
+    
+    console.log('API 响应数据:', { trendResp, vehicleResp, surveyResp, transportResp })
 
     // 统一做一层解包，兼容直接数组或 { data: [] } 结构
     const unwrapList = (resp) => {
@@ -232,7 +275,26 @@ const loadAll = async () => {
 
     transportTrends.value = unwrapList(trendResp)
     vehicleYearStats.value = unwrapList(vehicleResp)
-    surveyData.value = unwrapList(surveyResp)
+    
+    // 处理问卷数据：企业用户只能看到自己企业的数据
+    let surveyList = unwrapList(surveyResp)
+    if (currentRole.value === 'COMPANY' || currentRole.value === 'COMPANY_ADMIN' || currentRole.value === 'COMPANY_USER') {
+      const companyId = getCurrentCompanyId()
+      currentCompanyId.value = companyId
+      if (companyId) {
+        console.log('企业管理员 - 筛选问卷数据，companyId:', companyId, '原始数据量:', surveyList.length)
+        surveyList = surveyList.filter(item => {
+          const itemCompanyId = typeof item.companyId === 'string' ? parseInt(item.companyId) : item.companyId
+          return itemCompanyId === companyId
+        })
+        console.log('企业管理员 - 筛选后数据量:', surveyList.length)
+      } else {
+        console.warn('企业管理员 - 未找到 companyId，返回空数据')
+        surveyList = []
+      }
+    }
+    surveyData.value = surveyList
+    
     transportMonthlyStats.value = unwrapList(transportResp)
 
     updateSummary()
@@ -245,30 +307,59 @@ const loadAll = async () => {
       updateMonthlyTrendChart()
     })
   } catch (e) {
-    console.error(e)
-    ElMessage.error('加载分析数据失败')
+    console.error('加载分析数据失败:', e)
+    console.error('错误详情:', {
+      message: e.message,
+      stack: e.stack,
+      response: e.response,
+      request: e.request
+    })
+    ElMessage.error('加载分析数据失败: ' + (e.message || '未知错误'))
   }
 }
 
 const initCharts = () => {
-  if (transportTrendRef.value) {
-    transportTrendChart = echarts.init(transportTrendRef.value)
-  }
-  if (yoyBarRef.value) {
-    yoyBarChart = echarts.init(yoyBarRef.value)
-  }
-  if (vehicleRankRef.value) {
-    vehicleRankChart = echarts.init(vehicleRankRef.value)
-  }
-  if (vehicleScatterRef.value) {
-    vehicleScatterChart = echarts.init(vehicleScatterRef.value)
-  }
+  try {
+    console.log('初始化图表', {
+      transportTrendRef: !!transportTrendRef.value,
+      yoyBarRef: !!yoyBarRef.value,
+      vehicleRankRef: !!vehicleRankRef.value,
+      vehicleScatterRef: !!vehicleScatterRef.value,
+      loadingScatterRef: !!loadingScatterRef.value,
+      monthlyTrendRef: !!monthlyTrendRef.value,
+      echarts: typeof echarts !== 'undefined'
+    })
+    
+    if (!echarts) {
+      console.error('ECharts 未加载')
+      ElMessage.error('图表库未加载，请刷新页面重试')
+      return
+    }
+    
+    if (transportTrendRef.value) {
+      transportTrendChart = echarts.init(transportTrendRef.value)
+    }
+    if (yoyBarRef.value) {
+      yoyBarChart = echarts.init(yoyBarRef.value)
+    }
+    if (vehicleRankRef.value) {
+      vehicleRankChart = echarts.init(vehicleRankRef.value)
+    }
+    if (vehicleScatterRef.value) {
+      vehicleScatterChart = echarts.init(vehicleScatterRef.value)
+    }
 
-  if (loadingScatterRef.value) {
-    loadingScatterChart = echarts.init(loadingScatterRef.value)
-  }
-  if (monthlyTrendRef.value) {
-    monthlyTrendChart = echarts.init(monthlyTrendRef.value)
+    if (loadingScatterRef.value) {
+      loadingScatterChart = echarts.init(loadingScatterRef.value)
+    }
+    if (monthlyTrendRef.value) {
+      monthlyTrendChart = echarts.init(monthlyTrendRef.value)
+    }
+    
+    console.log('图表初始化完成')
+  } catch (error) {
+    console.error('初始化图表失败:', error)
+    ElMessage.error('图表初始化失败: ' + (error.message || '未知错误'))
   }
 
   // 下钻交互：点击排行榜或散点图的车辆，同步到月度趋势选择
@@ -456,7 +547,22 @@ const updateLoadingScatterChart = () => {
     '91%以上': 95
   }
 
-  let points = surveyData.value
+  // 企业用户只能看到自己企业的数据
+  let filteredSurveyData = surveyData.value
+  if (currentRole.value === 'COMPANY' || currentRole.value === 'COMPANY_ADMIN' || currentRole.value === 'COMPANY_USER') {
+    const companyId = getCurrentCompanyId()
+    if (companyId) {
+      filteredSurveyData = surveyData.value.filter(item => {
+        const itemCompanyId = typeof item.companyId === 'string' ? parseInt(item.companyId) : item.companyId
+        return itemCompanyId === companyId
+      })
+      console.log('散点图 - 企业管理员过滤后数据量:', filteredSurveyData.length)
+    } else {
+      filteredSurveyData = []
+    }
+  }
+
+  let points = filteredSurveyData
     .filter(item => item.avgLoadingRate && item.annualTransport2025)
     .map(item => {
       const x = rateMap[item.avgLoadingRate] ?? null
