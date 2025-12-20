@@ -31,7 +31,16 @@
         <el-table-column prop="seq" label="序号" width="80" />
         <el-table-column prop="address" label="地址" min-width="200" />
         <el-table-column prop="pointType" label="类型" width="120" />
-        <el-table-column prop="arriveTime" label="到达时间" width="160" />
+        <el-table-column label="到达时间" width="160">
+          <template #default="{ row }">
+            {{ formatDateTime(row.arriveTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="出发时间" width="160">
+          <template #default="{ row }">
+            {{ formatDateTime(row.departTime) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="description" label="备注" min-width="150" />
       </el-table>
     </el-dialog>
@@ -43,6 +52,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { routePointApi } from '@/api'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 
@@ -110,6 +120,15 @@ const handleDelete = async (row) => {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
     }
+  }
+}
+
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '-'
+  try {
+    return dayjs(dateTime).format('YYYY-MM-DD HH:mm')
+  } catch (e) {
+    return dateTime
   }
 }
 </script>

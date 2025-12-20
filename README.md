@@ -69,7 +69,7 @@ cailanzi/
 │   ├── 项目需求.txt
 │   ├── 用户注册流程测试.md
 │   ├── 字段整理.txt
-│   └── cailanzi_localhost-*.sql  # 数据库导出/备份
+│   └── cailanzi-localhost-dump.sql  # 数据库导出/备份
 └── README.md               # 项目总览（本文件）
 ```
 
@@ -85,14 +85,7 @@ cailanzi/
 
 **详细部署文档**：请查看 [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md)
 
-**快速部署**：
-```bash
-# 1. 上传项目到服务器
-# 2. 修改 docker-compose.yml 中的数据库密码
-# 3. 运行部署脚本
-bash deploy.sh
-
-# 或手动部署
+# 手动部署
 docker-compose up -d --build
 ```
 
@@ -151,7 +144,7 @@ docker-compose up -d --build
 
 ```bash
 # 示例（根据本地账号修改）
-mysql -u root -p < docs/cailanzi_localhost-2025_12_16_17_30_59-dump.sql
+mysql -u root -p < docs/cailanzi_localhost-dump.sql
 ```
 
 后端默认数据库配置（可在 `backend/src/main/resources/application.properties` 中调整）：

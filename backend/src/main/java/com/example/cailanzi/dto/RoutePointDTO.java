@@ -17,6 +17,7 @@ public class RoutePointDTO {
     private String address;
     private RoutePoint.PointType pointType;
     private LocalDateTime arriveTime;
+    private LocalDateTime departTime;
     private String description;
 }
 

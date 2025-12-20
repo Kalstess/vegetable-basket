@@ -44,6 +44,13 @@
         </el-select>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
+        <div v-if="canApprove && selectedCompanies.length > 0" style="margin-left: 10px;">
+          <el-button type="success" @click="handleBatchApprove">批量通过 ({{ selectedCompanies.length }})</el-button>
+          <el-button type="warning" @click="handleBatchReject">批量驳回 ({{ selectedCompanies.length }})</el-button>
+        </div>
+        <div v-if="canDelete && selectedCompaniesForDelete.length > 0" style="margin-left: 10px;">
+          <el-button type="danger" @click="handleBatchDelete">批量删除 ({{ selectedCompaniesForDelete.length }})</el-button>
+        </div>
       </div>
 
       <!-- 表格 -->
@@ -52,7 +59,20 @@
         :data="tableData"
         style="width: 100%; margin-top: 20px;"
         border
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column 
+          v-if="canApprove"
+          type="selection" 
+          width="55"
+          :selectable="(row) => row.status === 'PENDING'"
+        />
+        <el-table-column 
+          v-if="canDelete"
+          type="selection" 
+          width="55"
+          @selection-change="handleDeleteSelectionChange"
+        />
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="企业名称" min-width="200" />
         <el-table-column prop="companyType" label="企业性质" width="120" />
@@ -204,6 +224,8 @@ const approvalForm = ref({
 const approvalLoading = ref(false)
 const existingCompanies = ref([])
 const allCompanies = ref([])
+const selectedCompanies = ref([])
+const selectedCompaniesForDelete = ref([])
 
 // 获取当前用户角色
 const currentRole = ref(localStorage.getItem('role') || '')
@@ -386,6 +408,122 @@ const handleSizeChange = () => {
 
 const handlePageChange = () => {
   loadData()
+}
+
+const handleSelectionChange = (selection) => {
+  selectedCompanies.value = selection.filter(row => row.status === 'PENDING')
+}
+
+const handleDeleteSelectionChange = (selection) => {
+  selectedCompaniesForDelete.value = selection
+}
+
+const handleBatchApprove = async () => {
+  if (selectedCompanies.value.length === 0) {
+    ElMessage.warning('请选择要审批的企业')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要批量通过 ${selectedCompanies.value.length} 个企业吗？`,
+      '批量审批通过',
+      {
+        type: 'warning'
+      }
+    )
+    
+    approvalLoading.value = true
+    const promises = selectedCompanies.value.map(company => 
+      companyRegistrationApi.approve(company.id, '批量审批通过', null)
+    )
+    
+    await Promise.all(promises)
+    ElMessage.success(`成功通过 ${selectedCompanies.value.length} 个企业`)
+    selectedCompanies.value = []
+    loadData()
+    loadAllCompanies()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量审批失败:', error)
+      ElMessage.error(error.response?.data?.message || '批量审批失败')
+    }
+  } finally {
+    approvalLoading.value = false
+  }
+}
+
+const handleBatchReject = async () => {
+  if (selectedCompanies.value.length === 0) {
+    ElMessage.warning('请选择要驳回的企业')
+    return
+  }
+  
+  try {
+    await ElMessageBox.prompt(
+      `确定要批量驳回 ${selectedCompanies.value.length} 个企业吗？请输入驳回原因：`,
+      '批量审批驳回',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputPlaceholder: '请输入驳回原因（可选）'
+      }
+    ).then(({ value }) => {
+      approvalLoading.value = true
+      const promises = selectedCompanies.value.map(company => 
+        companyRegistrationApi.reject(company.id, value || '批量审批驳回')
+      )
+      
+      return Promise.all(promises).then(() => {
+        ElMessage.success(`成功驳回 ${selectedCompanies.value.length} 个企业`)
+        selectedCompanies.value = []
+        loadData()
+        loadAllCompanies()
+      })
+    })
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量驳回失败:', error)
+      ElMessage.error(error.response?.data?.message || '批量驳回失败')
+    }
+  } finally {
+    approvalLoading.value = false
+  }
+}
+
+const handleBatchDelete = async () => {
+  if (selectedCompaniesForDelete.value.length === 0) {
+    ElMessage.warning('请选择要删除的企业')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要批量删除 ${selectedCompaniesForDelete.value.length} 个企业吗？此操作不可恢复！`,
+      '批量删除',
+      {
+        type: 'warning',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }
+    )
+    
+    const promises = selectedCompaniesForDelete.value.map(company => 
+      companyApi.delete(company.id)
+    )
+    
+    await Promise.all(promises)
+    ElMessage.success(`成功删除 ${selectedCompaniesForDelete.value.length} 个企业`)
+    selectedCompaniesForDelete.value = []
+    loadData()
+    loadAllCompanies()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除失败:', error)
+      ElMessage.error(error.response?.data?.message || '批量删除失败')
+    }
+  }
 }
 
 const getStatusName = (status) => {

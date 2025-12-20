@@ -3,7 +3,7 @@
     <!-- 侧边栏 -->
     <el-aside :width="isCollapse ? '64px' : '200px'" class="aside">
       <div class="logo">
-        <span>菜篮子</span>
+        <span>菜篮子工程车<br/>管理系统</span>
       </div>
       <el-menu
         :default-active="activeMenu"
@@ -138,12 +138,16 @@ const handleLogout = async () => {
 
   .logo {
     height: 60px;
-    line-height: 60px;
+    line-height: 30px;
     text-align: center;
     color: #fff;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     background-color: #2b3a4a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
   }
 }
 

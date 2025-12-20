@@ -74,11 +74,13 @@ public class AuthService {
         String token = JwtUtil.generateToken(user.getUsername());
         log.info("Login successful for user: {}", request.getUsername());
 
+        Long companyId = user.getCompany() != null ? user.getCompany().getId() : null;
         return new LoginResponse(
                 token,
                 user.getUsername(),
                 user.getNickname() != null ? user.getNickname() : user.getUsername(),
-                user.getRole().name()
+                user.getRole().name(),
+                companyId
         );
     }
 

@@ -51,6 +51,17 @@ public class SurveyService {
     }
 
     public SurveyQuestionnaireDTO save(SurveyQuestionnaireDTO dto, Long userId) {
+        // 验证必填字段
+        if (dto.getCompanyId() == null) {
+            throw new IllegalArgumentException("企业ID不能为空");
+        }
+        if (dto.getSurveyYear() == null) {
+            throw new IllegalArgumentException("调查年份不能为空");
+        }
+        
+        log.debug("保存问卷 - companyId: {}, surveyYear: {}, id: {}", 
+                dto.getCompanyId(), dto.getSurveyYear(), dto.getId());
+        
         // 检查企业是否存在
         Company company = companyRepository.findById(dto.getCompanyId())
                 .orElseThrow(() -> new IllegalArgumentException("企业不存在，ID: " + dto.getCompanyId()));

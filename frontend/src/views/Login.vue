@@ -1,10 +1,10 @@
 <template>
   <div class="login-container">
-    <ParticleText text="菜篮子工程" :fontSize="100" :particleSize="2" :particleDistance="80" :particleSpeed="0.5" />
+    <ParticleText text="菜篮子工程车管理系统" :fontSize="100" :particleSize="2" :particleDistance="80" :particleSpeed="0.5" />
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
-          <h2>菜篮子</h2>
+          <h2>菜篮子工程车管理系统</h2>
         </div>
       </template>
       <el-form
@@ -101,6 +101,9 @@ const handleLogin = async () => {
         localStorage.setItem('username', data.username)
         localStorage.setItem('nickname', data.nickname || data.username)
         localStorage.setItem('role', data.role)
+        if (data.companyId) {
+          localStorage.setItem('companyId', data.companyId.toString())
+        }
         
         console.log('Token已保存:', data.token.substring(0, 20) + '...')
 

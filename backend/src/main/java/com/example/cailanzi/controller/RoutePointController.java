@@ -138,6 +138,14 @@ public class RoutePointController {
     @PostMapping("/batch")
     @Operation(summary = "批量创建路线点")
     public ResponseEntity<ResponseMessage<List<RoutePointDTO>>> createRoutePointsBatch(@Valid @RequestBody List<RoutePoint> routePoints) {
+        // 调试日志：打印接收到的数据
+        for (RoutePoint rp : routePoints) {
+            System.out.println("接收到的路线点 - routeId: " + rp.getRouteId() + 
+                    ", seq: " + rp.getSeq() + 
+                    ", arriveTime: " + rp.getArriveTime() + 
+                    ", departTime: " + rp.getDepartTime());
+        }
+        
         List<RoutePointDTO> saved = routePoints.stream()
                 .map(routePointService::save)
                 .toList();

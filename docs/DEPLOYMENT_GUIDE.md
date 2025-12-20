@@ -145,13 +145,13 @@ cd /root/vegetable-basket
 # 检查关键文件是否存在
 ls -la docker-compose.yml
 ls -la docker-compose.low-memory.yml
-ls -la docs/cailanzi_localhost-2025_12_17_19_51_30-dump.sql
+ls -la docs/cailanzi_localhost-dump.sql
 
 # 如果 SQL 文件不存在，请检查 docs 目录
 ls -la docs/
 ```
 
-**重要**：确保 `docs/cailanzi_localhost-2025_12_17_19_51_30-dump.sql` 文件存在，这是数据库初始化文件。
+**重要**：确保 `docs/cailanzi_localhost-dump.sql` 文件存在，这是数据库初始化文件。
 
 ---
 
@@ -813,7 +813,9 @@ docker exec -i cailanzi-mysql mysql -uroot -p111111 < /root/vegetable-basket/doc
 2. 进入项目目录：`cd /root/vegetable-basket`
 3. 停止服务：`docker compose down`
 4. 更新代码：`git pull origin main`
-5. 重新构建启动：`docker compose up -d --build`
-6. 验证更新：访问前端页面确认功能正常
+5. **执行数据库迁移**（如果有新的迁移脚本）：查看 [数据库迁移指南]
+6. 重新构建启动：`docker compose up -d --build`
+7. 验证更新：访问前端页面确认功能正常
 
 详细步骤请参考更新指南文档。
+

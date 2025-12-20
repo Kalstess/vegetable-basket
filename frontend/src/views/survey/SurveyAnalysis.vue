@@ -14,7 +14,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="企业">
-          <el-select v-model="filters.companyId" placeholder="全部企业" clearable filterable style="width: 200px;">
+          <el-select 
+            v-model="filters.companyId" 
+            :placeholder="(currentRole === 'COMPANY' || currentRole === 'COMPANY_ADMIN' || currentRole === 'COMPANY_USER') ? '我的企业' : '全部企业'" 
+            :clearable="currentRole !== 'COMPANY' && currentRole !== 'COMPANY_ADMIN' && currentRole !== 'COMPANY_USER'"
+            :disabled="currentRole === 'COMPANY' || currentRole === 'COMPANY_ADMIN' || currentRole === 'COMPANY_USER'"
+            filterable 
+            style="width: 200px;"
+          >
             <el-option
               v-for="company in companies"
               :key="company.id"
@@ -526,7 +533,12 @@ onMounted(() => {
 })
 
 const currentRole = ref(localStorage.getItem('role') || '')
-const currentCompanyId = ref(localStorage.getItem('companyId') || null)
+// 修复：使用普通 ref 而不是函数式 ref
+const getCurrentCompanyId = () => {
+  const id = localStorage.getItem('companyId')
+  return id ? parseInt(id) : null
+}
+const currentCompanyId = ref(getCurrentCompanyId())
 
 const loadCompanies = async () => {
   try {
@@ -535,16 +547,27 @@ const loadCompanies = async () => {
     
     // 企业用户（包括企业管理员和普通用户）只能看到自己企业
     if (currentRole.value === 'COMPANY' || currentRole.value === 'COMPANY_ADMIN' || currentRole.value === 'COMPANY_USER') {
-      if (currentCompanyId.value) {
-        allCompanies = allCompanies.filter(c => c.id == currentCompanyId.value)
+      // 重新获取 companyId（可能登录后更新了）
+      const companyId = getCurrentCompanyId()
+      currentCompanyId.value = companyId
+      
+      if (companyId) {
+        // 确保企业列表包含当前用户的企业
+        allCompanies = allCompanies.filter(c => {
+          const cid = typeof c.id === 'string' ? parseInt(c.id) : c.id
+          return cid === companyId
+        })
         // 自动设置筛选条件为企业自己的ID
-        filters.value.companyId = parseInt(currentCompanyId.value)
+        filters.value.companyId = companyId
+        console.log('企业管理员 - 自动设置企业筛选:', companyId, '企业列表:', allCompanies)
       } else {
+        console.warn('企业管理员 - 未找到 companyId')
         allCompanies = []
       }
     }
     
     companies.value = allCompanies
+    console.log('加载的企业列表:', companies.value)
   } catch (error) {
     console.error('加载企业列表失败', error)
   }
@@ -561,17 +584,31 @@ const loadData = async () => {
     }
     
     // 企业用户（包括企业管理员和普通用户）只能看到自己企业的问卷
+    // 重新获取 companyId（可能登录后更新了）
+    const companyId = getCurrentCompanyId()
+    currentCompanyId.value = companyId
+    
     if (currentRole.value === 'COMPANY' || currentRole.value === 'COMPANY_ADMIN' || currentRole.value === 'COMPANY_USER') {
-      if (currentCompanyId.value) {
-        data = data.filter(item => item.companyId == currentCompanyId.value)
+      if (companyId) {
+        console.log('企业管理员 - 筛选问卷数据，companyId:', companyId, '原始数据量:', data.length)
+        data = data.filter(item => {
+          const itemCompanyId = typeof item.companyId === 'string' ? parseInt(item.companyId) : item.companyId
+          return itemCompanyId === companyId
+        })
+        console.log('企业管理员 - 筛选后数据量:', data.length)
       } else {
+        console.warn('企业管理员 - 未找到 companyId，返回空数据')
         data = []
       }
     }
     
     // 应用筛选
     if (filters.value.companyId) {
-      data = data.filter(item => item.companyId === filters.value.companyId)
+      const filterCompanyId = typeof filters.value.companyId === 'string' ? parseInt(filters.value.companyId) : filters.value.companyId
+      data = data.filter(item => {
+        const itemCompanyId = typeof item.companyId === 'string' ? parseInt(item.companyId) : item.companyId
+        return itemCompanyId === filterCompanyId
+      })
     }
     if (filters.value.status) {
       data = data.filter(item => item.submitStatus === filters.value.status)
@@ -609,10 +646,20 @@ const calculateStats = (data) => {
 }
 
 const resetFilters = () => {
-  filters.value = {
-    year: null,
-    companyId: null,
-    status: null
+  // 如果是企业管理员，重置时保留企业筛选
+  const companyId = getCurrentCompanyId()
+  if (currentRole.value === 'COMPANY' || currentRole.value === 'COMPANY_ADMIN' || currentRole.value === 'COMPANY_USER') {
+    filters.value = {
+      year: null,
+      companyId: companyId,  // 保留企业筛选
+      status: null
+    }
+  } else {
+    filters.value = {
+      year: null,
+      companyId: null,
+      status: null
+    }
   }
   loadData()
 }
@@ -1194,6 +1241,32 @@ const updateRevenueChart = (data) => {
   
   const min = Math.min(...revenues)
   const max = Math.max(...revenues)
+  
+  // 处理所有值相同的情况
+  if (min === max) {
+    const ranges = [{
+      label: `${min.toFixed(0)}`,
+      count: revenues.length
+    }]
+    const option = {
+      tooltip: { trigger: 'axis' },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ranges.map(r => r.label)
+      },
+      yAxis: { type: 'value', name: '企业数量' },
+      series: [{
+        name: '企业数量',
+        type: 'bar',
+        data: ranges.map(r => r.count),
+        itemStyle: { color: '#409EFF' }
+      }]
+    }
+    chartInstances.revenue.setOption(option)
+    return
+  }
+  
   const step = (max - min) / 5
   const ranges = []
   for (let i = 0; i < 5; i++) {
@@ -1204,8 +1277,16 @@ const updateRevenueChart = (data) => {
   }
   
   revenues.forEach(revenue => {
-    const index = Math.min(Math.floor((revenue - min) / step), 4)
-    ranges[index].count++
+    // 计算索引，确保在有效范围内
+    let index = Math.floor((revenue - min) / step)
+    // 处理边界情况：当 revenue === max 时，index 可能是 5，需要限制为 4
+    index = Math.min(Math.max(0, index), 4)
+    // 确保 ranges[index] 存在
+    if (ranges[index]) {
+      ranges[index].count++
+    } else {
+      console.warn('收入分布计算错误 - revenue:', revenue, 'index:', index, 'ranges length:', ranges.length)
+    }
   })
   
   const total = ranges.reduce((sum, r) => sum + r.count, 0)

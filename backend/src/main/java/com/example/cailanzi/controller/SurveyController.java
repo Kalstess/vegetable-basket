@@ -10,11 +10,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/survey")
 @RequiredArgsConstructor
@@ -101,10 +103,22 @@ public class SurveyController {
         }
         
         try {
+            // 验证必填字段
+            if (dto.getCompanyId() == null) {
+                return ResponseEntity.status(400).body(ResponseMessage.error(400, "企业ID不能为空"));
+            }
+            if (dto.getSurveyYear() == null) {
+                return ResponseEntity.status(400).body(ResponseMessage.error(400, "调查年份不能为空"));
+            }
+            
             SurveyQuestionnaireDTO saved = surveyService.save(dto, currentUser.getId());
             return ResponseEntity.ok(ResponseMessage.success(saved));
         } catch (IllegalArgumentException e) {
+            log.error("保存问卷失败: {}", e.getMessage(), e);
             return ResponseEntity.status(400).body(ResponseMessage.error(400, e.getMessage()));
+        } catch (Exception e) {
+            log.error("保存问卷时发生未知错误", e);
+            return ResponseEntity.status(500).body(ResponseMessage.error(500, "保存失败: " + e.getMessage()));
         }
     }
 

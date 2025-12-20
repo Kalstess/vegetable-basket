@@ -47,6 +47,9 @@ public class RoutePoint extends BaseEntity {
     @Column(name = "arrive_time")
     private LocalDateTime arriveTime;
 
+    @Column(name = "depart_time")
+    private LocalDateTime departTime;
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 

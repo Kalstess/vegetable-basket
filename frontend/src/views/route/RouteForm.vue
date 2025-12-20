@@ -91,6 +91,23 @@
                 </el-form-item>
               </el-col>
             </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item
+                  :label="`出发时间`"
+                  :prop="`points.${index}.departTime`"
+                  :rules="pointRules.departTime"
+                >
+                  <el-time-picker
+                    v-model="formData.points[index].departTime"
+                    format="HH:mm"
+                    value-format="HH:mm"
+                    placeholder="选择时间"
+                    style="width: 100%"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
 
             <el-form-item
               :label="`地址`"
@@ -153,6 +170,7 @@ const formData = ref({
       pointType: '',
       address: '',
       arriveTime: null,
+      departTime: null,
       description: ''
     }
   ]
@@ -178,7 +196,31 @@ const rules = {
 const pointRules = {
   pointType: [{ required: true, message: '请选择地点类型', trigger: 'change' }],
   address: [{ required: true, message: '请输入地址', trigger: 'blur' }],
-  arriveTime: [{ required: true, message: '请选择到达时间', trigger: 'change' }]
+  arriveTime: [{ required: true, message: '请选择到达时间', trigger: 'change' }],
+  departTime: [
+    { required: true, message: '请选择出发时间', trigger: 'change' },
+    {
+      validator: (rule, value, callback) => {
+        if (!value) {
+          callback(new Error('请选择出发时间'))
+          return
+        }
+        // 获取当前路线点的索引
+        const index = parseInt(rule.field.split('.')[1])
+        const arriveTime = formData.value.points[index]?.arriveTime
+        if (arriveTime) {
+          const arriveMinutes = timeToMinutes(arriveTime)
+          const departMinutes = timeToMinutes(value)
+          if (departMinutes < arriveMinutes) {
+            callback(new Error('出发时间不能早于到达时间'))
+            return
+          }
+        }
+        callback()
+      },
+      trigger: 'change'
+    }
+  ]
 }
 
 onMounted(() => {
@@ -206,6 +248,7 @@ const addPoint = () => {
     pointType: '',
     address: '',
     arriveTime: null,
+    departTime: null,
     description: ''
   })
 }
@@ -268,6 +311,22 @@ const handleSubmit = async () => {
       hasError = true
       break
     }
+    // 检查出发时间
+    if (!p.departTime || (typeof p.departTime === 'string' && !p.departTime.trim())) {
+      ElMessage.warning(`路线点${i + 1}：请选择出发时间`)
+      hasError = true
+      break
+    }
+    // 验证出发时间不能早于到达时间
+    if (p.arriveTime && p.departTime) {
+      const arriveMinutes = timeToMinutes(p.arriveTime)
+      const departMinutes = timeToMinutes(p.departTime)
+      if (departMinutes < arriveMinutes) {
+        ElMessage.warning(`路线点${i + 1}：出发时间不能早于到达时间`)
+        hasError = true
+        break
+      }
+    }
   }
   
   if (hasError) {
@@ -302,10 +361,20 @@ const handleSubmit = async () => {
     const routeId = generateRouteId()
     const routePoints = formData.value.points.map((p, idx) => {
       // 将日期时间格式转换为 ISO 格式（T 分隔）：2025-11-15T01:06:00
-      const arriveTime = p.arriveTime
+      const arriveTime = p.arriveTime && p.arriveTime.trim()
         ? `${formData.value.routeDate}T${p.arriveTime}:00`
         : null
-      return {
+      // 出发时间是必填的，确保有值
+      const departTime = p.departTime && p.departTime.trim()
+        ? `${formData.value.routeDate}T${p.departTime}:00`
+        : null
+      
+      // 如果出发时间为空，抛出错误（虽然前端验证应该已经检查过了）
+      if (!departTime) {
+        throw new Error(`路线点${idx + 1}的出发时间不能为空`)
+      }
+      
+      const routePoint = {
         vehicle: { id: formData.value.vehicleId },
         routeDate: formData.value.routeDate,
         routeId: routeId,
@@ -313,9 +382,22 @@ const handleSubmit = async () => {
         address: p.address.trim(),
         pointType: p.pointType.trim(),
         arriveTime: arriveTime,
+        departTime: departTime,  // 确保 departTime 被包含在提交的数据中
         description: (p.description || '').trim()
       }
+      
+      // 调试日志
+      console.log(`路线点 ${idx + 1} 数据:`, {
+        arriveTime,
+        departTime,
+        routePoint: JSON.stringify(routePoint)
+      })
+      
+      return routePoint
     })
+    
+    // 调试日志：打印所有路线点数据
+    console.log('提交的路线点数据:', JSON.stringify(routePoints, null, 2))
     
     await routePointApi.createBatch(routePoints)
     ElMessage.success('提交成功')
@@ -337,6 +419,7 @@ const handleReset = () => {
         pointType: '',
         address: '',
         arriveTime: null,
+        departTime: null,
         description: ''
       }
     ]

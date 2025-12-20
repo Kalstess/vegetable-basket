@@ -44,6 +44,9 @@
         </el-select>
         <el-button type="primary" @click="loadData">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
+        <div v-if="selectedTransports.length > 0" style="margin-left: 10px;">
+          <el-button type="danger" @click="handleBatchDelete">批量删除 ({{ selectedTransports.length }})</el-button>
+        </div>
         <el-alert
           type="info"
           :closable="false"
@@ -60,7 +63,9 @@
         :data="tableData"
         style="width: 100%; margin-top: 20px;"
         border
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="plateNumber" label="车牌号" width="120" />
         <el-table-column prop="companyName" label="所属企业" min-width="150" />
@@ -239,6 +244,7 @@ const searchVehicleId = ref(null)
 const dialogVisible = ref(false)
 const currentRow = ref(null)
 const formRef = ref(null)
+const selectedTransports = ref([])
 
 const productTypes = ref([])
 const otherProductName = ref('')
@@ -442,6 +448,43 @@ const handleSubmit = async () => {
       }
     }
   })
+}
+
+const handleSelectionChange = (selection) => {
+  selectedTransports.value = selection
+}
+
+const handleBatchDelete = async () => {
+  if (selectedTransports.value.length === 0) {
+    ElMessage.warning('请选择要删除的运输统计')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      `确定要批量删除 ${selectedTransports.value.length} 条运输统计吗？此操作不可恢复！`,
+      '批量删除',
+      {
+        type: 'warning',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }
+    )
+    
+    const promises = selectedTransports.value.map(transport => 
+      transportApi.delete(transport.id)
+    )
+    
+    await Promise.all(promises)
+    ElMessage.success(`成功删除 ${selectedTransports.value.length} 条运输统计`)
+    selectedTransports.value = []
+    loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除失败:', error)
+      ElMessage.error(error.response?.data?.message || '批量删除失败')
+    }
+  }
 }
 
 const handleDelete = async (row) => {

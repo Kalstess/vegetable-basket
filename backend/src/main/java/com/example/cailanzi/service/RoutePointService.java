@@ -52,7 +52,18 @@ public class RoutePointService {
                 .orElseThrow(() -> new IllegalArgumentException("车辆不存在，ID: " + routePoint.getVehicle().getId()));
         routePoint.setVehicle(vehicle);
 
+        // 调试日志：打印保存前的数据
+        log.debug("保存路线点 - routeId: {}, seq: {}, arriveTime: {}, departTime: {}", 
+                routePoint.getRouteId(), 
+                routePoint.getSeq(),
+                routePoint.getArriveTime(),
+                routePoint.getDepartTime());
+
         RoutePoint saved = routePointRepository.save(routePoint);
+        
+        // 调试日志：打印保存后的数据
+        log.debug("路线点已保存 - id: {}, departTime: {}", saved.getId(), saved.getDepartTime());
+        
         return convertToDTO(saved);
     }
 
@@ -86,6 +97,9 @@ public class RoutePointService {
         if (routePoint.getArriveTime() != null) {
             existing.setArriveTime(routePoint.getArriveTime());
         }
+        if (routePoint.getDepartTime() != null) {
+            existing.setDepartTime(routePoint.getDepartTime());
+        }
         if (routePoint.getDescription() != null) {
             existing.setDescription(routePoint.getDescription());
         }
@@ -117,6 +131,7 @@ public class RoutePointService {
         dto.setAddress(routePoint.getAddress());
         dto.setPointType(routePoint.getPointType());
         dto.setArriveTime(routePoint.getArriveTime());
+        dto.setDepartTime(routePoint.getDepartTime());
         dto.setDescription(routePoint.getDescription());
         return dto;
     }

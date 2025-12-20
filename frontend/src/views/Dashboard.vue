@@ -455,6 +455,14 @@ const updateVehicleTypeChart = (data) => {
 const updateColorPlateChart = (data) => {
   if (!colorPlateChartInstance) return
   const total = Object.values(data).reduce((sum, val) => sum + val, 0)
+  
+  // 定义车牌颜色映射（修复颜色对调问题）
+  const colorMap = {
+    '蓝牌': '#409EFF',  // 蓝色
+    '黄牌': '#E6A23C',  // 黄色
+    '绿牌': '#67C23A'   // 绿色
+  }
+  
   const option = {
     tooltip: {
       trigger: 'item',
@@ -467,7 +475,10 @@ const updateColorPlateChart = (data) => {
         radius: '60%',
         data: Object.keys(data).map(key => ({
           value: data[key],
-          name: key
+          name: key,
+          itemStyle: {
+            color: colorMap[key] || '#909399'
+          }
         })),
         label: {
           formatter: '{b}: {c} ({d}%)'
