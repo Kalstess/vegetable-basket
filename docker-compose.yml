@@ -17,7 +17,7 @@ services:
     ports:
       - "3306:3306"   # 如服务器上已有 MySQL，可修改为其它端口
     volumes:
-      - ./docs/cailanzi_localhost-2025_12_17_19_51_30-dump.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docs/cailanzi_localhost-dump.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - db-data:/var/lib/mysql
 
   backend:

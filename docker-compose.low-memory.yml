@@ -50,7 +50,7 @@ services:
     volumes:
       # 注意：SQL 文件将在初始化时自动导入
       # 如果导入失败，可以注释掉下面这行，手动导入
-      - ./docs/cailanzi_localhost-2025_12_17_19_51_30-dump.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docs/cailanzi_localhost-dump.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - db-data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p111111"]
